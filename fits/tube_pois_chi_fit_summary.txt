@@ -1,0 +1,91 @@
+Chi correlation fit summary
+===========================
+geometry                = tube
+label                   = Circular tube, Poiseuille flow
+chi file                = data/chi_tube_pois.txt
+Pe file                 = data/Pe.txt
+Da file                 = data/Da.txt
+valid fitted points     = 1000000
+n_top_pe                = 5
+n_low_pe                = 5
+blend residuals         = absolute
+
+Fitted structure
+----------------
+chi_0(Da)   = CHI_0_DAINF   + (CHI_0_DA0   - CHI_0_DAINF  )/(1 + Da/Da_c0)
+chi_inf(Da) = CHI_INF_DAINF + (CHI_INF_DA0 - CHI_INF_DAINF)/(1 + Da/Da_c_inf)
+chi(Pe,Da)  = chi_inf(Da) + (chi_0(Da) - chi_inf(Da))/(1 + Pe/Pchi)
+
+Exact constants
+---------------
+CHI_0_DA0                = 1
+CHI_0_DAINF              = 0.722898245368
+CHI_INF_DA0              = 1
+CHI_INF_DAINF            = 0.709505604759
+
+Full-precision fitted parameters
+--------------------------------
+Da_c0                    = 2.81672782854
+Da_c_inf                 = 2.11901211104
+Pchi                     = 0.687400728976
+
+Rounded constants and fitted parameters
+---------------------------------------
+CHI_0_DA0                = 1.0000
+CHI_0_DAINF              = 0.7229
+CHI_INF_DA0              = 1.0000
+CHI_INF_DAINF            = 0.7095
+Da_c0                    = 2.8167
+Da_c_inf                 = 2.1190
+Pchi                     = 0.6874
+
+Corner limits from rounded formula
+----------------------------------
+Pe0_Da0                  = 1
+Pe0_Dainf                = 0.7229
+Peinf_Da0                = 1
+Peinf_Dainf              = 0.7095
+
+Fit quality: full-precision formula
+-----------------------------------
+mean_abs_error           = 0.00126408159432
+median_abs_error         = 0.000764607351104
+max_abs_error            = 0.00527134381779
+rms_error                = 0.00184829009359
+mean_abs_rel_error       = 0.00150833399364
+median_abs_rel_error     = 0.000934558581466
+max_abs_rel_error        = 0.00649451743365
+rms_rel_error            = 0.00220141549927
+
+Worst point: full-precision formula
+-----------------------------------
+Pe                       = 0.202444650998
+Da                       = 1.03517795563
+chi_true                 = 0.926054176923
+chi_fit                  = 0.920782833106
+error                    = -0.00527134381779
+abs_error                = 0.00527134381779
+rel_error                = -0.00569226288175
+abs_rel_error            = 0.00569226288175
+
+Fit quality: rounded formula
+----------------------------
+mean_abs_error           = 0.00126341609642
+median_abs_error         = 0.000763398426654
+max_abs_error            = 0.00527190555194
+rms_error                = 0.00184786459002
+mean_abs_rel_error       = 0.00150738576517
+median_abs_rel_error     = 0.000932998639499
+max_abs_rel_error        = 0.00649571622156
+rms_rel_error            = 0.00220070183961
+
+Worst point: rounded formula
+----------------------------
+Pe                       = 0.205263775271
+Da                       = 1.04959323056
+chi_true                 = 0.9252173314
+chi_fit                  = 0.919945425848
+error                    = -0.00527190555194
+abs_error                = 0.00527190555194
+rel_error                = -0.00569801858766
+abs_rel_error            = 0.00569801858766

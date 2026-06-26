@@ -1,0 +1,88 @@
+Sherwood correlation fit summary
+================================
+geometry              = oneplate
+label                 = Parallel plates, Poiseuille flow, one reactive surface
+Sh file               = data/Sh_oneplate_pois.txt
+Pe file               = data/Pe.txt
+Da file               = data/Da.txt
+valid fitted points   = 1000000
+n_top_pe              = 5
+n_low_pe              = 5
+blend residuals       = relative
+
+Fitted structure
+----------------
+Sh_inf(Da) = SH_INF_DAINF + (SH_INF_DA0 - SH_INF_DAINF)/(1 + Da/Da_c_inf)
+Sh_0(Da)   = SH_0_DAINF  + (SH_0_DA0  - SH_0_DAINF )/(1 + Da/Da_c0)
+Pc(Da)     = Pc_inf - (Pc_inf - Pc0)/(1 + (Da/Da_c_pc)^(2/3))
+Sh(Pe,Da)  = Sh_inf(Da) + (Sh_0(Da) - Sh_inf(Da))/(1 + (Pe/Pc(Da))^(4/3))
+
+Exact constants and fixed exponents
+-----------------------------------
+SH_0_DA0             = 5.71428571429
+SH_0_DAINF           = 4.72818894595
+SH_INF_DA0           = 5.38461538462
+SH_INF_DAINF         = 4.86073677894
+m_pc                 = 0.666666666667
+nP                   = 1.33333333333
+
+Full-precision fitted parameters
+--------------------------------
+Da_c_inf             = 2.48578886164
+Da_c0                = 2.40528092567
+Pc0                  = 0.0100348334488
+Pc_inf               = 1.07099617602
+Da_c_pc              = 0.874733116297
+
+Rounded constants and fitted parameters
+---------------------------------------
+SH_INF_DA0           = 5.3846
+SH_INF_DAINF         = 4.8607
+SH_0_DA0             = 5.7143
+SH_0_DAINF           = 4.7282
+Da_c_inf             = 2.4858
+Da_c0                = 2.4053
+Pc0                  = 0.0100
+Pc_inf               = 1.0710
+Da_c_pc              = 0.8747
+m_pc                 = 2/3
+nP                   = 4/3
+
+Corner limits from rounded formula
+----------------------------------
+Pe0_Da0              = 5.7143
+Pe0_Dainf            = 4.7282
+Peinf_Da0            = 5.3846
+Peinf_Dainf          = 4.8607
+
+Fit quality: full-precision formula
+-----------------------------------
+mean_abs_rel         = 0.000531021784169
+median_abs_rel       = 0.000387664024611
+max_abs_rel          = 0.00214638262439
+rms_rel              = 0.000726683234506
+
+Worst point: full-precision formula
+-----------------------------------
+Pe                   = 0.0507815211233
+Da                   = 0.00540421642071
+Sh_true              = 5.54548195196
+Sh_fit               = 5.53357922586
+rel_err              = -0.00214638262439
+abs_rel_err          = 0.00214638262439
+
+Fit quality: rounded formula
+----------------------------
+mean_abs_rel         = 0.00053095035275
+median_abs_rel       = 0.000386892730363
+max_abs_rel          = 0.00216111094425
+rms_rel              = 0.000726698476871
+
+Worst point: rounded formula
+----------------------------
+Pe                   = 0.0507815211233
+Da                   = 0.00540421642071
+Sh_true              = 5.54548195196
+Sh_fit               = 5.53349755023
+rel_err              = -0.00216111094425
+abs_rel_err          = 0.00216111094425

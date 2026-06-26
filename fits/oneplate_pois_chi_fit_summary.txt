@@ -1,0 +1,91 @@
+Chi correlation fit summary
+===========================
+geometry                = oneplate
+label                   = Parallel plates, Poiseuille flow, one reactive surface
+chi file                = data/chi_oneplate_pois.txt
+Pe file                 = data/Pe.txt
+Da file                 = data/Da.txt
+valid fitted points     = 1000000
+n_top_pe                = 5
+n_low_pe                = 5
+blend residuals         = absolute
+
+Fitted structure
+----------------
+chi_0(Da)   = CHI_0_DAINF   + (CHI_0_DA0   - CHI_0_DAINF  )/(1 + Da/Da_c0)
+chi_inf(Da) = CHI_INF_DAINF + (CHI_INF_DA0 - CHI_INF_DAINF)/(1 + Da/Da_c_inf)
+chi(Pe,Da)  = chi_inf(Da) + (chi_0(Da) - chi_inf(Da))/(1 + Pe/Pchi)
+
+Exact constants
+---------------
+CHI_0_DA0                = 1
+CHI_0_DAINF              = 0.958131400976
+CHI_INF_DA0              = 1
+CHI_INF_DAINF            = 0.94593699617
+
+Full-precision fitted parameters
+--------------------------------
+Da_c0                    = 2.27495039466
+Da_c_inf                 = 2.39277576305
+Pchi                     = 0.877207441521
+
+Rounded constants and fitted parameters
+---------------------------------------
+CHI_0_DA0                = 1.0000
+CHI_0_DAINF              = 0.9581
+CHI_INF_DA0              = 1.0000
+CHI_INF_DAINF            = 0.9459
+Da_c0                    = 2.2750
+Da_c_inf                 = 2.3928
+Pchi                     = 0.8772
+
+Corner limits from rounded formula
+----------------------------------
+Pe0_Da0                  = 1
+Pe0_Dainf                = 0.9581
+Peinf_Da0                = 1
+Peinf_Dainf              = 0.9459
+
+Fit quality: full-precision formula
+-----------------------------------
+mean_abs_error           = 0.000201630488534
+median_abs_error         = 0.000106025632388
+max_abs_error            = 0.00111073353473
+rms_error                = 0.000316479466882
+mean_abs_rel_error       = 0.000209053003271
+median_abs_rel_error     = 0.000108565416197
+max_abs_rel_error        = 0.00116170273304
+rms_rel_error            = 0.000330037474835
+
+Worst point: full-precision formula
+-----------------------------------
+Pe                       = 4.36153778921
+Da                       = 10.8651577465
+chi_true                 = 0.956205354334
+chi_fit                  = 0.957316087869
+error                    = 0.00111073353473
+abs_error                = 0.00111073353473
+rel_error                = 0.00116160564224
+abs_rel_error            = 0.00116160564224
+
+Fit quality: rounded formula
+----------------------------
+mean_abs_error           = 0.000197059662362
+median_abs_error         = 0.000100850869325
+max_abs_error            = 0.00108131009319
+rms_error                = 0.000311235068803
+mean_abs_rel_error       = 0.000204221497065
+median_abs_rel_error     = 0.000103239696149
+max_abs_rel_error        = 0.00113074191574
+rms_rel_error            = 0.000324442792871
+
+Worst point: rounded formula
+----------------------------
+Pe                       = 4.30163575811
+Da                       = 10.5687597118
+chi_true                 = 0.956437848152
+chi_fit                  = 0.957519158245
+error                    = 0.00108131009319
+abs_error                = 0.00108131009319
+rel_error                = 0.00113055970682
+abs_rel_error            = 0.00113055970682

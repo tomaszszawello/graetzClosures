@@ -1,0 +1,43 @@
+# Large computed reference data (~25 MB each).
+# Regenerate with the parallel eigenvalue solvers (see README).
+data/Sh_tube_pois.txt
+data/Sh_plates_pois.txt
+data/Sh_oneplate_pois.txt
+data/chi_tube_pois.txt
+data/chi_plates_pois.txt
+data/chi_oneplate_pois.txt
+data/Le_tube_pois.txt
+data/Le_plates_pois.txt
+data/Le_oneplate_pois.txt
+
+# tube_solver.py run outputs (regenerate with tube_solver.py)
+data/tube_*
+
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.egg-info/
+dist/
+build/
+.eggs/
+*.egg
+.venv/
+venv/
+env/
+
+# Jupyter
+.ipynb_checkpoints/
+*.ipynb
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Editors
+.vscode/
+.idea/
+*.swp
+*.swo
+*~

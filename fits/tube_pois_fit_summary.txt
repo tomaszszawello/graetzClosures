@@ -1,0 +1,88 @@
+Sherwood correlation fit summary
+================================
+geometry              = tube
+label                 = Circular tube, Poiseuille flow
+Sh file               = data/Sh_tube_pois.txt
+Pe file               = data/Pe.txt
+Da file               = data/Da.txt
+valid fitted points   = 1000000
+n_top_pe              = 5
+n_low_pe              = 5
+blend residuals       = relative
+
+Fitted structure
+----------------
+Sh_inf(Da) = SH_INF_DAINF + (SH_INF_DA0 - SH_INF_DAINF)/(1 + Da/Da_c_inf)
+Sh_0(Da)   = SH_0_DAINF  + (SH_0_DA0  - SH_0_DAINF )/(1 + Da/Da_c0)
+Pc(Da)     = Pc_inf - (Pc_inf - Pc0)/(1 + (Da/Da_c_pc)^(2/3))
+Sh(Pe,Da)  = Sh_inf(Da) + (Sh_0(Da) - Sh_inf(Da))/(1 + (Pe/Pc(Da))^(4/3))
+
+Exact constants and fixed exponents
+-----------------------------------
+SH_0_DA0             = 6
+SH_0_DAINF           = 4.18065498525
+SH_INF_DA0           = 4.36363636364
+SH_INF_DAINF         = 3.65679
+m_pc                 = 0.666666666667
+nP                   = 1.33333333333
+
+Full-precision fitted parameters
+--------------------------------
+Da_c_inf             = 1.88480161391
+Da_c0                = 2.68858591657
+Pc0                  = 0.0108435863245
+Pc_inf               = 0.972759926705
+Da_c_pc              = 0.568678684501
+
+Rounded constants and fitted parameters
+---------------------------------------
+SH_INF_DA0           = 4.3636
+SH_INF_DAINF         = 3.6568
+SH_0_DA0             = 6.0000
+SH_0_DAINF           = 4.1807
+Da_c_inf             = 1.8848
+Da_c0                = 2.6886
+Pc0                  = 0.0108
+Pc_inf               = 0.9728
+Da_c_pc              = 0.5687
+m_pc                 = 2/3
+nP                   = 4/3
+
+Corner limits from rounded formula
+----------------------------------
+Pe0_Da0              = 6
+Pe0_Dainf            = 4.1807
+Peinf_Da0            = 4.3636
+Peinf_Dainf          = 3.6568
+
+Fit quality: full-precision formula
+-----------------------------------
+mean_abs_rel         = 0.00285166455775
+median_abs_rel       = 0.00209344324817
+max_abs_rel          = 0.0126719953329
+rms_rel              = 0.00380497575425
+
+Worst point: full-precision formula
+-----------------------------------
+Pe                   = 0.722534949179
+Da                   = 1.32777082936
+Sh_true              = 4.73047755665
+Sh_fit               = 4.67053296713
+rel_err              = -0.0126719953329
+abs_rel_err          = 0.0126719953329
+
+Fit quality: rounded formula
+----------------------------
+mean_abs_rel         = 0.00285311282421
+median_abs_rel       = 0.00209436761215
+max_abs_rel          = 0.0126717615231
+rms_rel              = 0.00380596906783
+
+Worst point: rounded formula
+----------------------------
+Pe                   = 0.722534949179
+Da                   = 1.32777082936
+Sh_true              = 4.73047755665
+Sh_fit               = 4.67053407316
+rel_err              = -0.0126717615231
+abs_rel_err          = 0.0126717615231

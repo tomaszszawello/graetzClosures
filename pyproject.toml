@@ -1,0 +1,29 @@
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "graetz-closures"
+version = "0.1.0"
+description = "Compact Sh/Nu and chi correlations for the extended Graetz problem in laminar duct flows"
+readme = "README.md"
+license = { file = "LICENSE" }
+authors = [
+    { name = "Tomasz Szawełło" },
+    { name = "Piotr Szymczak" },
+]
+requires-python = ">=3.9"
+dependencies = ["numpy"]
+keywords = ["Graetz", "Sherwood", "Nusselt", "heat transfer", "mass transfer", "laminar flow"]
+classifiers = [
+    "Intended Audience :: Science/Research",
+    "Topic :: Scientific/Engineering :: Physics",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+]
+
+[project.urls]
+Repository = "https://github.com/tszawello/graetzClosures"
+
+[tool.setuptools.packages.find]
+include = ["graetz_closures*"]
