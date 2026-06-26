@@ -23,7 +23,7 @@ classifiers = [
 ]
 
 [project.urls]
-Repository = "https://github.com/tszawello/graetzClosures"
+Repository = "https://github.com/tomaszszawello/graetzClosures"
 
 [tool.setuptools.packages.find]
 include = ["graetz_closures*"]

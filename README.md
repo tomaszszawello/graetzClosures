@@ -1,4 +1,5 @@
 # graetzClosures
+<<<<<<< HEAD
 
 Companion code for the manuscript
 
@@ -262,3 +263,5 @@ then, please contact the authors.
 ## License
 
 MIT License — see [LICENSE](LICENSE).
+=======
+>>>>>>> 10000252822783cfc8aa8c52431839d15f2e42e5
