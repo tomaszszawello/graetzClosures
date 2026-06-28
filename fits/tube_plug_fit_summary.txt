@@ -1,0 +1,68 @@
+Plug-flow Sherwood correlation fit summary
+===========================================
+geometry              = tube
+label                 = Circular tube, plug flow
+Sh source             = data/Sh_tube_plug.txt
+Sh source mode        = direct
+Da file               = data/Da.txt
+valid fitted points   = 1000
+residuals             = relative
+
+Fitted structure
+----------------
+Sh_plug(Da) = Sh_DaInf + (Sh_Da0 - Sh_DaInf)/(1 + Da/Da_c)
+Only Da_c is fitted; both limiting Sherwood numbers are fixed.
+
+Exact constants
+---------------
+Sh_Da0               = 8
+Sh_DaInf             = 5.78318596295
+
+Full-precision fitted parameter
+-------------------------------
+Da_c                 = 2.77838463807
+
+Rounded constants and fitted parameter
+--------------------------------------
+Sh_Da0               = 8.0000
+Sh_DaInf             = 5.7832
+Da_c                 = 2.7784
+
+Rounded formula
+---------------
+Sh_tube,plug(Da) = 5.7832 + (8.0000 - 5.7832)/(1 + Da/2.7784)
+
+Corner limits from rounded formula
+----------------------------------
+Da_to_0              = 8
+Da_to_inf            = 5.78318596295
+
+Fit quality: full-precision formula
+-----------------------------------
+mean_abs_rel         = 0.00208316199387
+median_abs_rel       = 0.00130042706556
+max_abs_rel          = 0.00575527405917
+rms_rel              = 0.00288180362431
+
+Worst point: full-precision formula
+-----------------------------------
+Da                   = 0.939664831495
+Sh_true              = 7.48280889918
+Sh_fit               = 7.43974328324
+rel_err              = -0.00575527405917
+abs_rel_err          = 0.00575527405917
+
+Fit quality: rounded formula
+----------------------------
+mean_abs_rel         = 0.00208392535178
+median_abs_rel       = 0.00130157847484
+max_abs_rel          = 0.00575449061117
+rms_rel              = 0.00288237033653
+
+Worst point: rounded formula
+----------------------------
+Da                   = 0.939664831495
+Sh_true              = 7.48280889918
+Sh_fit               = 7.43974914563
+rel_err              = -0.00575449061117
+abs_rel_err          = 0.00575449061117

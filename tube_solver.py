@@ -12,9 +12,9 @@ It also fits the downstream multiplicative amplitude factor Gamma defined by
 
 in a user-selectable fully developed window. Gamma is obtained as the
 geometric mean of C_m,full / C_m,corr in that window, i.e. by least squares in
-log concentration. Each run writes only three outputs: one concentration plot,
-one CSV containing all plotted profiles, and one JSON file containing the
-parameters, fitted Gamma, decay-rate comparison, and error diagnostics.
+log concentration. Each run writes four data files (profiles in CSV and
+space-delimited txt, parameters/diagnostics in JSON and key=value txt)
+and an optional concentration plot (PNG).
 
 Default definitions:
     Pe = u_bar R / D

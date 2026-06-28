@@ -10,6 +10,9 @@ data/Le_tube_pois.txt
 data/Le_plates_pois.txt
 data/Le_oneplate_pois.txt
 
+# Large figures
+*.pdf
+
 # tube_solver.py run outputs (regenerate with tube_solver.py)
 data/tube_*
 

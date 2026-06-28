@@ -1,5 +1,4 @@
 # graetzClosures
-<<<<<<< HEAD
 
 Companion code for the manuscript
 
@@ -24,7 +23,7 @@ pip install .
 ```python
 import graetz_closures as gc
 
-# Sherwood number — Poiseuille flow (default)
+# Hydraulic-diameter Sherwood number — Poiseuille flow (default)
 gc.sh(Pe=10, Da=100)                              # circular tube
 gc.sh(Pe=10, Da=100, geometry="plates")           # parallel plates, two reactive walls
 gc.sh(Pe=10, Da=100, geometry="oneplate")         # parallel plates, one reactive wall
@@ -33,7 +32,13 @@ gc.sh(Pe=10, Da=100, geometry="oneplate")         # parallel plates, one reactiv
 gc.sh(Da=10, flow="plug")
 gc.sh(Da=10, flow="plug", geometry="plates")
 
+# Characteristic-length Sh (Sh_ell = Sh_Dh / multiplier) — for the 1D closure
+# Multiplier is 2 for tube and oneplate, 4 for plates.
+gc.sh_l(Pe=10, Da=100)                            # tube: Sh_ell = Sh_Dh / 2
+gc.sh_l(Pe=10, Da=100, geometry="plates")         # plates: Sh_ell = Sh_Dh / 4
+
 # Averaging factor chi = C_a / C_m — Poiseuille flow only
+# For plug flow, chi = 1 exactly; passing arrays returns an array of ones.
 gc.chi(Pe=10, Da=100)
 gc.chi(Pe=10, Da=100, geometry="plates")
 gc.chi(Pe=10, Da=100, geometry="oneplate")
@@ -46,6 +51,12 @@ chi_curve = gc.chi(Pe, Da=50, geometry="tube")    # shape (300,)
 
 Pe_grid, Da_grid = np.meshgrid(np.logspace(-1, 2, 50), np.logspace(-1, 2, 50))
 sh_map = gc.sh(Pe_grid, Da_grid, geometry="plates")   # shape (50, 50)
+
+# Range checking — correlations fitted for 1e-3 ≤ Pe, Da ≤ 1e3
+# A RuntimeWarning is issued automatically when inputs fall outside this window
+# or into the singular corner Da ≪ Pe² ≪ 1. Suppress with check_range=False.
+gc.sh(Pe=1e-5, Da=100)                            # warns: Pe out of range
+gc.sh(Pe=10, Da=100, check_range=False)           # no warning
 ```
 
 **Geometry options** (`geometry=`, default `"tube"`):
@@ -119,7 +130,8 @@ model, producing concentration profiles and decay-rate diagnostics.
 ├── plates_poiseuille_parallel_fast.py # Eigenvalue sweep — parallel plates (2 walls)
 ├── plates_onewall_poiseuille_parallel_fast.py  # Eigenvalue sweep — one-wall plates
 ├── sherwood_plug.py                   # Plug-flow Sh and χ (Pe-independent)
-├── sherwood_fit.py                    # Fit Sh(Pe, Da) correlation
+├── sherwood_plug_fit.py               # Fit plug-flow Sh(Da) correlation
+├── sherwood_fit.py                    # Fit Poiseuille Sh(Pe, Da) correlation
 ├── chi_fit.py                         # Fit χ(Pe, Da) correlation
 ├── plot_full_diagrams.py              # Full (Pe, Da) maps of Sh, χ, Le
 ├── plot_sh_vs_da.py                   # Sh(Da) curves for tube and plates
@@ -163,6 +175,16 @@ python sherwood_plug.py oneplate --output-dir data
 Writes `data/Sh_tube_plug.txt`, `data/Sh_plates_plug.txt`, and
 `data/Sh_oneplate_plug.txt`. Add `--with-entrance` to also save
 entrance-length estimates versus Da.
+
+### 1b — Fit the plug-flow Sh correlation
+
+```bash
+python sherwood_plug_fit.py all
+```
+
+Reads `data/Sh_{tube,plates,oneplate}_plug.txt` and writes one-parameter fit
+summaries to `fits/{tube,plates,oneplate}_plug_fit_summary.txt`. Use
+`--geometry tube` (or `plates`, `oneplate`) to fit a single geometry.
 
 ### 2 — Poiseuille eigenvalue sweeps (parallel, minutes to hours)
 
@@ -232,24 +254,32 @@ Key options:
 | `--output-dir` | `tube_solver_output` | Output directory |
 | `--no-plots` | — | Skip the PNG figure |
 
-Each run writes four files:
-- `{prefix}_profiles.csv` — axial concentration profiles
+Each run writes four data files plus an optional plot:
+- `{prefix}_profiles.csv` — axial concentration profiles (CSV)
 - `{prefix}_profiles.txt` — same, space-delimited (numpy format)
-- `{prefix}_parameters_errors.json` — all scalar diagnostics
+- `{prefix}_parameters_errors.json` — all scalar diagnostics (JSON)
 - `{prefix}_parameters.txt` — same, key = value text format
+- `{prefix}.png` — concentration comparison plot (skipped with `--no-plots`)
 
 ---
 
 ## Dimensionless groups and notation
 
-| Symbol | Definition | Notes |
-|---|---|---|
-| Pe | ū R / D (tube) or ū a / D (plates) | Péclet number |
-| Da | k R / D (tube) or k a / D (plates) | Damköhler number |
-| Sh | 2R j_w / [D (C_m − C_w)] | Hydraulic-diameter Sherwood number |
-| χ | C_a / C_m | Cross-sectional averaging factor |
-| Z | z / R (tube) or z / a (plates) | Dimensionless axial coordinate |
-| β | downstream decay rate, C_m ~ exp(−β Z) | Dominant eigenvalue |
+Geometry-specific definitions (all Sherwood numbers use the hydraulic diameter):
+
+| Symbol | Tube (radius R) | Plates, two reactive walls (half-gap a) | Plates, one reactive wall (gap b) |
+|---|---|---|---|
+| Pe | ū R / D | ū a / D | ū b / D |
+| Da | k R / D | k a / D | k b / D |
+| Sh | 2R j_w / [D (C_m − C_w)] | 4a j_w / [D (C_m − C_w)] | 2b j_w / [D (C_m − C_w)] |
+| Z | z / R | z / a | z / b |
+
+Common symbols:
+
+| Symbol | Definition |
+|---|---|
+| χ | C_a / C_m — cross-sectional averaging factor |
+| β | dominant downstream decay rate, C_m ∼ exp(−β Z) |
 
 ---
 
@@ -263,5 +293,3 @@ then, please contact the authors.
 ## License
 
 MIT License — see [LICENSE](LICENSE).
-=======
->>>>>>> 10000252822783cfc8aa8c52431839d15f2e42e5

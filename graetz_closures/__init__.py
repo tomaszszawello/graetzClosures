@@ -7,6 +7,7 @@ Basic usage
     gc.sh(Pe=10, Da=100)                              # tube, Poiseuille (defaults)
     gc.sh(Da=10, flow="plug")                         # tube, plug flow
     gc.sh(Pe=10, Da=100, geometry="plates")           # parallel plates, Poiseuille
+    gc.sh_l(Pe=10, Da=100)                            # characteristic-length Sh (for 1D closure)
     gc.chi(Pe=10, Da=100, geometry="oneplate")        # one reactive plate, Poiseuille
 
     import numpy as np
@@ -20,7 +21,7 @@ with Robin boundary conditions: Sherwood/Nusselt correlations and averaged
 transport closures", International Journal of Heat and Mass Transfer (submitted).
 """
 
-from graetz_closures._correlations import sh, chi
+from graetz_closures._correlations import sh, sh_l, chi
 
-__all__ = ["sh", "chi"]
+__all__ = ["sh", "sh_l", "chi"]
 __version__ = "0.1.0"

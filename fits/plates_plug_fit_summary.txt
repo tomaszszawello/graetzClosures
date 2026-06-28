@@ -1,0 +1,68 @@
+Plug-flow Sherwood correlation fit summary
+===========================================
+geometry              = plates
+label                 = Parallel plates, plug flow, two reactive surfaces
+Sh source             = data/Sh_plates_plug.txt
+Sh source mode        = direct
+Da file               = data/Da.txt
+valid fitted points   = 1000
+residuals             = relative
+
+Fitted structure
+----------------
+Sh_plug(Da) = Sh_DaInf + (Sh_Da0 - Sh_DaInf)/(1 + Da/Da_c)
+Only Da_c is fitted; both limiting Sherwood numbers are fixed.
+
+Exact constants
+---------------
+Sh_Da0               = 12
+Sh_DaInf             = 9.86960440109
+
+Full-precision fitted parameter
+-------------------------------
+Da_c                 = 2.40082462271
+
+Rounded constants and fitted parameter
+--------------------------------------
+Sh_Da0               = 12.0000
+Sh_DaInf             = 9.8696
+Da_c                 = 2.4008
+
+Rounded formula
+---------------
+Sh_plates,plug(Da) = 9.8696 + (12.0000 - 9.8696)/(1 + Da/2.4008)
+
+Corner limits from rounded formula
+----------------------------------
+Da_to_0              = 12
+Da_to_inf            = 9.86960440109
+
+Fit quality: full-precision formula
+-----------------------------------
+mean_abs_rel         = 0.000726754276071
+median_abs_rel       = 0.000463344255223
+max_abs_rel          = 0.00197978379688
+rms_rel              = 0.000999608206505
+
+Worst point: full-precision formula
+-----------------------------------
+Da                   = 0.742798248256
+Sh_true              = 11.5194204785
+Sh_fit               = 11.4966145165
+rel_err              = -0.00197978379688
+abs_rel_err          = 0.00197978379688
+
+Fit quality: rounded formula
+----------------------------
+mean_abs_rel         = 0.000726606797276
+median_abs_rel       = 0.0004631324779
+max_abs_rel          = 0.001980216351
+rms_rel              = 0.000999502440007
+
+Worst point: rounded formula
+----------------------------
+Da                   = 0.742798248256
+Sh_true              = 11.5194204785
+Sh_fit               = 11.4966095337
+rel_err              = -0.001980216351
+abs_rel_err          = 0.001980216351
