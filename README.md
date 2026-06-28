@@ -81,7 +81,7 @@ For heat transfer, substitute Nu for Sh and Bi for Da — the correlation expres
 ## Problem overview
 
 The code addresses the steady extended Graetz problem in two canonical duct
-geometries under Poiseuille flow:
+geometries under plug and Poiseuille flow::
 
 - **Circular tube** — one reactive cylindrical wall
 - **Parallel plates** — two reactive walls (symmetric) or one reactive / one inert wall
@@ -113,6 +113,7 @@ model, producing concentration profiles and decay-rate diagnostics.
 │   ├── Da.txt                         # Da grid (shared by all geometries)
 │   ├── Sh_tube_plug.txt               # Plug-flow Sh(Da), tube
 │   ├── Sh_plates_plug.txt             # Plug-flow Sh(Da), two-wall plates
+│   ├── Sh_oneplate_plug.txt             # Plug-flow Sh(Da), one-wall plates
 │   └── ...                            # (large Poiseuille tables excluded — see below)
 │
 ├── fits/                              # Fit summaries (Sh and χ coefficients)
@@ -121,6 +122,7 @@ model, producing concentration profiles and decay-rate diagnostics.
 │   └── ...
 │
 ├── figures/                           # Publication figures
+│   ├── sh_pois_oneplate.png
 │   ├── sh_pois_tube.png
 │   ├── sh_pois_plates.png
 │   ├── sh_vs_da.png
@@ -184,7 +186,8 @@ python sherwood_plug_fit.py all
 
 Reads `data/Sh_{tube,plates,oneplate}_plug.txt` and writes one-parameter fit
 summaries to `fits/{tube,plates,oneplate}_plug_fit_summary.txt`. Use
-`--geometry tube` (or `plates`, `oneplate`) to fit a single geometry.
+`python sherwood_plug_fit.py tube` (or `plates`, `oneplate`) to fit a
+single geometry.
 
 ### 2 — Poiseuille eigenvalue sweeps (parallel, minutes to hours)
 

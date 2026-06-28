@@ -4,7 +4,7 @@ geometry              = oneplate
 label                 = Parallel plates, plug flow, one reactive surface
 Sh source             = data/Sh_oneplate_plug.txt
 Sh source mode        = direct
-Da file               = data/Da_plug_oneplate.txt
+Da file               = data/Da.txt
 valid fitted points   = 1000
 residuals             = relative
 
