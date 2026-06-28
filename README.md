@@ -81,14 +81,14 @@ For heat transfer, substitute Nu for Sh and Bi for Da — the correlation expres
 ## Problem overview
 
 The code addresses the steady extended Graetz problem in two canonical duct
-geometries under plug and Poiseuille flow::
+geometries under plug and Poiseuille flow:
 
 - **Circular tube** — one reactive cylindrical wall
 - **Parallel plates** — two reactive walls (symmetric) or one reactive / one inert wall
 
 The wall condition is a Robin (third-kind) boundary condition parameterised by
-the Damköhler number Da = k R / D (or k a / D for plates), which interpolates
-between the impermeable limit Da → 0 and the Dirichlet limit Da → ∞.
+the Damköhler number Da = k ell / D, where ell = R for the tube, ell = a for
+two-wall plates, and ell = b for the one-reactive-wall plate geometry.
 
 For each geometry the code computes:
 
@@ -290,6 +290,17 @@ Common symbols:
 
 If you use this code, please cite the manuscript once it is published. Until
 then, please contact the authors.
+
+---
+
+## Data
+
+The full numerical dataset is archived on Zenodo:
+
+T. Szawełło and P. Szymczak, dataset for
+“Extended Graetz problem in laminar duct flows with Robin boundary conditions:
+Sherwood/Nusselt correlations and averaged transport closures”,
+Zenodo, https://doi.org/10.5281/zenodo.20937456
 
 ---
 
