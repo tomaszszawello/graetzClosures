@@ -56,10 +56,12 @@ GEOMETRIES = {
     "plates": {
         "label": "Parallel plates",
         "color": "tab:blue",
+        "marker": None,
     },
     "tube": {
         "label": "Circular tube",
         "color": "tab:red",
+        "marker": "o",
     },
 }
 
@@ -196,6 +198,12 @@ def plot_sh_vs_da(data_dir: Path, output_base: Path, geometries: list[str]):
         config = GEOMETRIES[geometry]
         label = config["label"]
         color = config["color"]
+        marker = config.get("marker")
+        marker_kwargs = (
+            dict(marker=marker, markersize=5, markerfacecolor="none", markevery=20)
+            if marker
+            else {}
+        )
 
         # Plug flow: Sh_<geometry>_plug.txt
         Sh_plug_raw, plug_path = load_sh_file(data_dir, geometry, "plug")
@@ -211,6 +219,7 @@ def plot_sh_vs_da(data_dir: Path, output_base: Path, geometries: list[str]):
                 lw=2.8,
                 ls="-",
                 label=f"{label}: plug",
+                **marker_kwargs,
             )
             any_curve = True
             print(f"Loaded plug curve: {plug_path}")
@@ -238,6 +247,7 @@ def plot_sh_vs_da(data_dir: Path, output_base: Path, geometries: list[str]):
                 lw=2.8,
                 ls="--",
                 label=fr"{label}: Poiseuille, low $\mathrm{{Pe}}$",
+                **marker_kwargs,
             )
             ax.semilogx(
                 Da,
@@ -246,6 +256,7 @@ def plot_sh_vs_da(data_dir: Path, output_base: Path, geometries: list[str]):
                 lw=2.8,
                 ls=":",
                 label=fr"{label}: Poiseuille, high $\mathrm{{Pe}}$",
+                **marker_kwargs,
             )
             any_curve = True
             print(

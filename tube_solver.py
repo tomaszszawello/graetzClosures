@@ -87,7 +87,7 @@ class TubeCorrelationParameters:
     # Low-Pe branch, Sh^0(Da)
     sh_0_da0: float = 6.0
     sh_0_dainf: float = 4.1807
-    da_c_0_sh: float = 2.6886
+    da_c_0_sh: float = 2.6889
 
     # High-Pe branch, Sh^inf(Da)
     sh_inf_da0: float = 4.3636  # 48/11 rounded as in Appendix B
@@ -96,14 +96,14 @@ class TubeCorrelationParameters:
 
     # Pe crossover for Sh
     pe_c_da0: float = 0.0108
-    pe_c_dainf: float = 0.9728
-    da_c_pe_sh: float = 0.5687
+    pe_c_dainf: float = 0.9727
+    da_c_pe_sh: float = 0.5686
     sh_pe_exponent: float = 4.0 / 3.0
     pe_c_da_exponent: float = 2.0 / 3.0
 
     # Averaging factor chi = C_a/C_m
     chi_0_dainf: float = 0.7229
-    da_c_0_chi: float = 2.8167
+    da_c_0_chi: float = 2.8168
     chi_inf_dainf: float = 0.7095
     da_c_inf_chi: float = 2.1190
     pe_c_chi: float = 0.6874
@@ -124,8 +124,12 @@ class TubeCorrelationResult:
 
 
 def _positive_inputs(Pe: float, Da: float) -> None:
-    if Pe <= 0.0:
-        raise ValueError("Pe must be positive.")
+    # Pe = 0 is physically meaningful (pure diffusion) and is used as such by
+    # the eigenvalue sweep scripts, e.g. in check_low_pe_behavior(). It is
+    # rejected specifically in solve_axisym_ADR_steady(), where 1/Pe appears
+    # directly in the discretization.
+    if Pe < 0.0:
+        raise ValueError("Pe must be non-negative.")
     if Da < 0.0:
         raise ValueError("Da must be non-negative.")
 
@@ -140,9 +144,9 @@ def validate_correlation_window(Pe: float, Da: float) -> None:
             stacklevel=2,
         )
 
-    if Pe < 0.1 and Da < 0.01 * Pe**2:
+    if Pe < 0.1 and Da < Pe**2:
         warnings.warn(
-            "This case lies deep in the singular weak-exchange corner "
+            "This case lies in the singular weak-exchange corner "
             "Da << Pe^2 << 1, which is not resolved by the compact Sh fit.",
             RuntimeWarning,
             stacklevel=2,
@@ -246,6 +250,12 @@ def solve_axisym_ADR_steady(
     condition imposes the exact dominant modal slope, C_Z=lambda_minus C.
     """
     _positive_inputs(Pe, Da)
+    if Pe <= 0.0:
+        raise ValueError(
+            "Pe must be positive for the 2D solver: 1/Pe appears directly in "
+            "the discretization (invPe), so Pe = 0 is not representable here "
+            "even though it is a physically meaningful limit elsewhere."
+        )
     if Nz < 3 or Nr < 2:
         raise ValueError("Require Nz >= 3 and Nr >= 2.")
     if Lambda <= 0.0:
@@ -545,21 +555,69 @@ def tube_wall_residual(
     return -dphi_wall - Da * phi_wall
 
 
-def tube_eigenfunction(
+def tube_poiseuille_eigen_ode_aug(
+    rho: float,
+    y: np.ndarray,
     beta: float,
     Pe: float,
-    n_points: int = 1000,
+) -> list[float]:
+    """
+    Augmented radial ODE system: adds the cross-sectional integrals.
+
+    y[0] = phi
+    y[1] = dphi/drho
+    y[2] = Im = 2 int_0^rho s U(s) phi(s) ds
+    y[3] = Ia = 2 int_0^rho s phi(s) ds
+
+    Accumulating Im, Ia as extra ODE states (matching
+    tube_poiseuille_parallel_fast.py's graetz_ode_tube_aug) avoids the
+    quadrature/cancellation bias a post-hoc trapz(phi) integral has at small
+    Da, where Cm/Cw - 1 = O(Da) is itself comparable to trapz's own
+    discretization error.
+    """
+    phi, dphi, Im, Ia = y
+    U = velocity_profile_tube(rho)
+    coefficient = beta**2 + Pe * beta * U
+    ddphi = -(dphi / rho) - coefficient * phi
+    dIm = 2.0 * rho * U * phi
+    dIa = 2.0 * rho * phi
+    return [dphi, ddphi, dIm, dIa]
+
+
+def tube_eigenfunction_with_integrals(
+    beta: float,
+    Pe: float,
+    n_points: int | None = None,
     rho0: float = 1.0e-7,
     rtol: float = 1.0e-10,
     atol: float = 1.0e-12,
-) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
+) -> tuple[np.ndarray, np.ndarray, np.ndarray, float, float]:
+    """Eigenfunction plus accurate cross-sectional integrals Im, Ia.
+
+    If n_points is None, only the endpoint values are returned (rho, phi,
+    dphi each of length 2, at rho=0 and rho=1). If n_points is an integer,
+    rho, phi, dphi are also sampled at n_points points.
+
+    Returns:
+        rho, phi, dphi, Im, Ia
+    where
+        Im = 2 int_0^1 rho U phi drho = Cm-shape integral (Cm/Cw = Im/phi_wall),
+        Ia = 2 int_0^1 rho phi drho = Ca-shape integral.
+    """
     phi0, dphi0 = tube_eigen_initial_conditions(beta, Pe, rho0)
-    rho_eval = np.linspace(rho0, 1.0, n_points)
+    # Small-rho integral contributions (phi is ~constant at 1 there):
+    #   Im0 = 2 int_0^rho0 s*U(0)*phi(0) ds = 2 rho0^2 (U(0) = 2)
+    #   Ia0 = 2 int_0^rho0 s*phi(0) ds = rho0^2
+    Im0 = 2.0 * rho0**2
+    Ia0 = rho0**2
+
+    t_eval = None if n_points is None else np.linspace(rho0, 1.0, n_points)
+
     solution = solve_ivp(
-        tube_poiseuille_eigen_ode,
+        tube_poiseuille_eigen_ode_aug,
         t_span=(rho0, 1.0),
-        y0=[phi0, dphi0],
-        t_eval=rho_eval,
+        y0=[phi0, dphi0, Im0, Ia0],
+        t_eval=t_eval,
         args=(beta, Pe),
         method="DOP853",
         rtol=rtol,
@@ -568,14 +626,34 @@ def tube_eigenfunction(
     if not solution.success:
         raise RuntimeError(f"Eigenfunction ODE solve failed: {solution.message}")
 
-    rho = np.concatenate(([0.0], solution.t))
-    phi = np.concatenate(([1.0], solution.y[0]))
-    dphi = np.concatenate(([0.0], solution.y[1]))
-    return rho, phi, dphi
+    Im = solution.y[2, -1]
+    Ia = solution.y[3, -1]
+
+    if n_points is None:
+        rho = np.array([0.0, 1.0])
+        phi = np.array([1.0, solution.y[0, -1]])
+        dphi = np.array([0.0, solution.y[1, -1]])
+    else:
+        rho = np.concatenate(([0.0], solution.t))
+        phi = np.concatenate(([1.0], solution.y[0]))
+        dphi = np.concatenate(([0.0], solution.y[1]))
+
+    return rho, phi, dphi, Im, Ia
 
 
 def tube_mode_is_physical(beta: float, Pe: float, Da: float, rho0: float = 1.0e-7) -> bool:
-    rho, phi, _ = tube_eigenfunction(
+    """Physical test for the dominant mode.
+
+    The old absolute condition Cm/Cw > 1 rejects the true mode at very small
+    Da, because Cm/Cw - 1 = O(Da) and can come out on either side of 1 from
+    roundoff alone. Only clearly negative excess is rejected here, matching
+    mode_is_physical() in tube_poiseuille_parallel_fast.py. Cm/Cw itself uses
+    the augmented-integral Im (see tube_eigenfunction_with_integrals) rather
+    than a post-hoc trapz(phi): at small Da a plain trapz integral is not
+    even accurate enough to get the sign of Cm/Cw - 1 right, which made the
+    tolerance alone insufficient to fix small-Da failures.
+    """
+    rho, phi, _, Im, _ = tube_eigenfunction_with_integrals(
         beta,
         Pe,
         n_points=500,
@@ -586,9 +664,11 @@ def tube_mode_is_physical(beta: float, Pe: float, Da: float, rho0: float = 1.0e-
     if phi[-1] <= 0.0 or np.min(phi) <= 0.0:
         return False
 
-    u = velocity_profile_tube(rho)
-    cm_over_cw = 2.0 * np.trapezoid(rho * u * phi, rho) / phi[-1]
-    return bool(cm_over_cw > 1.0)
+    cm_over_cw = Im / phi[-1]
+    excess = cm_over_cw - 1.0
+
+    # Allow tiny roundoff-scale violations only.
+    return bool(excess >= -max(1.0e-12, 1.0e-6 * max(Da, 1.0e-300)))
 
 
 def find_beta1_tube_poiseuille(
@@ -659,11 +739,7 @@ class ExactModeProperties:
 
 def exact_mode_properties(Pe: float, Da: float, beta: float) -> ExactModeProperties:
     """Compute exact fully developed Sh and chi from the dominant eigenfunction."""
-    rho, phi, dphi = tube_eigenfunction(beta, Pe, n_points=1600)
-    u = velocity_profile_tube(rho)
-
-    cm_shape = 2.0 * np.trapezoid(rho * u * phi, rho)
-    c_area_shape = 2.0 * np.trapezoid(rho * phi, rho)
+    _, phi, dphi, cm_shape, c_area_shape = tube_eigenfunction_with_integrals(beta, Pe)
     c_wall_shape = float(phi[-1])
     wall_flux_shape = float(-dphi[-1])
 
@@ -895,9 +971,15 @@ def _reference_log_tick_label(value: float, _position: int) -> str:
     return rf"${coefficient_text}\times 10^{{-1}}$"
 
 
-def save_concentration_plot(
-    output_dir: Path,
-    prefix: str,
+def _format_num_for_title(value: float) -> str:
+    """Format a number with no decimal places if it is a whole number."""
+    if float(value).is_integer():
+        return str(int(value))
+    return f"{value:g}"
+
+
+def plot_concentration_on_ax(
+    ax: plt.Axes,
     z: np.ndarray,
     cm_full: np.ndarray,
     cm_corr: np.ndarray,
@@ -907,15 +989,17 @@ def save_concentration_plot(
     constant_chi: float,
     y_min: float,
     y_max: float,
-    dpi: int,
-) -> Path:
-    """Save the single publication-style concentration comparison plot."""
-    configure_plot_style()
+    title: str,
+    show_xlabel: bool = True,
+    show_ylabel: bool = True,
+    show_legend: bool = True,
+    panel_label: str | None = None,
+) -> None:
+    """Draw the manuscript-style concentration comparison onto an existing axes.
 
-    # 12 x 8 inches at 128 dpi reproduces the 1536 x 1024 reference aspect.
-    fig, ax = plt.subplots(figsize=(12.0, 8.0), dpi=dpi)
-    fig.subplots_adjust(left=0.16, right=0.975, bottom=0.185, top=0.92)
-
+    Shared by save_concentration_plot() (single-panel CLI runs) and any script
+    assembling several cases into one multi-panel figure.
+    """
     gray = "#7f7f7f"
     red = "#d62728"
     orange = "#ff9900"
@@ -961,10 +1045,11 @@ def save_concentration_plot(
     )
 
     ax.set_xlim(float(z[0]), float(z[-1]))
-    ax.set_ylim(y_min, y_max)
-    ax.set_xlabel(r"$Z$", labelpad=10)
-    ax.set_ylabel(r"$C_{\mathrm{m}}$", labelpad=0)
-    ax.set_title("Concentration", pad=8)
+    if show_xlabel:
+        ax.set_xlabel(r"$Z$", labelpad=10)
+    if show_ylabel:
+        ax.set_ylabel(r"$C_{\mathrm{m}}$", labelpad=0)
+    ax.set_title(title, pad=8)
 
     # Match the labeled logarithmic ticks visible in the reference figure.
     labeled_ticks = [0.1, 0.2, 0.3, 0.4, 0.6, 1.0]
@@ -981,30 +1066,112 @@ def save_concentration_plot(
 
     ax.grid(True, which="major", color="#bfbfbf", alpha=0.38, linewidth=1.3)
     ax.grid(True, which="minor", color="#cfcfcf", alpha=0.30, linewidth=1.0)
-    ax.legend(
-        loc="upper right",
-        frameon=False,
-        handlelength=2.2,
-        handletextpad=0.75,
-        borderaxespad=0.55,
-        labelspacing=0.55,
+    if show_legend:
+        ax.legend(
+            loc="upper right",
+            frameon=False,
+            handlelength=2.2,
+            handletextpad=0.75,
+            borderaxespad=0.55,
+            labelspacing=0.55,
+        )
+    if panel_label:
+        ax.text(
+            0.03,
+            0.96,
+            panel_label,
+            transform=ax.transAxes,
+            fontsize=30,
+            fontweight="bold",
+            va="top",
+            ha="left",
+        )
+
+
+def save_concentration_plot(
+    output_dir: Path,
+    prefix: str,
+    z: np.ndarray,
+    cm_full: np.ndarray,
+    cm_corr: np.ndarray,
+    cm_corr_scaled: np.ndarray,
+    cm_const: np.ndarray,
+    constant_sh: float,
+    constant_chi: float,
+    y_min: float,
+    y_max: float,
+    dpi: int,
+    Pe: float,
+    Da: float,
+) -> tuple[Path, Path]:
+    """Save the single publication-style concentration comparison plot."""
+    configure_plot_style()
+
+    # 12 x 8 inches at 128 dpi reproduces the 1536 x 1024 reference aspect.
+    fig, ax = plt.subplots(figsize=(12.0, 8.0), dpi=dpi)
+    fig.subplots_adjust(left=0.16, right=0.975, bottom=0.185, top=0.92)
+
+    plot_concentration_on_ax(
+        ax,
+        z=z,
+        cm_full=cm_full,
+        cm_corr=cm_corr,
+        cm_corr_scaled=cm_corr_scaled,
+        cm_const=cm_const,
+        constant_sh=constant_sh,
+        constant_chi=constant_chi,
+        y_min=y_min,
+        y_max=y_max,
+        title=(
+            f"Concentration for Pe={_format_num_for_title(Pe)}, "
+            f"Da={_format_num_for_title(Da)}"
+        ),
     )
 
-    path = output_dir / f"{prefix}.png"
-    fig.savefig(path, dpi=dpi, facecolor="white")
-    path = output_dir / f"{prefix}.pdf"
-    fig.savefig(path, facecolor="white")
+    png_path = output_dir / f"{prefix}.png"
+    pdf_path = output_dir / f"{prefix}.pdf"
+    fig.savefig(png_path, dpi=dpi, facecolor="white")
+    fig.savefig(pdf_path, facecolor="white")
     plt.close(fig)
-    return path
+    return png_path, pdf_path
 
 
 # =========================================================
 # Case runner
 # =========================================================
-def run_case(args: argparse.Namespace) -> dict[str, Any]:
+@dataclass(frozen=True)
+class CaseResult:
+    """Everything computed for a single (Pe, Da) case, before printing/saving."""
+
+    args: argparse.Namespace
+    prefix: str
+    nz: int
+    corr: TubeCorrelationResult
+    exact_mode: ExactModeProperties
+    beta_exact: float
+    beta_corr: float
+    beta_const: float
+    beta_rel_error: float
+    beta_const_rel_error: float
+    z: np.ndarray
+    cm_full: np.ndarray
+    cm_corr: np.ndarray
+    cm_corr_scaled: np.ndarray
+    cm_const: np.ndarray
+    gamma_fit: DownstreamFit
+    gamma_mask: np.ndarray
+    decay_comparison: dict[str, float]
+    summary: dict[str, Any]
+
+
+def compute_case(args: argparse.Namespace) -> CaseResult:
+    """Solve the 2D problem, evaluate correlations, and fit Gamma for one case.
+
+    Pure computation: no printing, no file output. Shared by run_case() (the
+    single-case CLI path) and any script that assembles several cases into
+    one figure or report.
+    """
     _positive_inputs(args.Pe, args.Da)
-    output_dir = Path(args.output_dir).expanduser().resolve()
-    output_dir.mkdir(parents=True, exist_ok=True)
 
     if args.nz is None:
         nz = int(math.ceil(args.Lambda / args.dz)) + 1
@@ -1106,6 +1273,9 @@ def run_case(args: argparse.Namespace) -> dict[str, Any]:
     beta_profile_rel_error = (
         beta_profile_abs_error / beta_exact if beta_exact != 0.0 else np.nan
     )
+    beta_const_rel_error = (
+        (beta_const - beta_exact) / beta_exact if beta_exact != 0.0 else np.nan
+    )
     identity_residual_at_exact_beta = (
         corr.chi * beta_exact**2 + args.Pe * beta_exact - k_corr
     )
@@ -1132,9 +1302,7 @@ def run_case(args: argparse.Namespace) -> dict[str, Any]:
         "beta_full_profile_fit": gamma_fit.beta_full_profile_fit,
         "relative_error_profile_fit_vs_exact": beta_profile_rel_error,
         "beta_constant_closure": beta_const,
-        "relative_error_constant_vs_exact": (
-            (beta_const - beta_exact) / beta_exact if beta_exact != 0.0 else np.nan
-        ),
+        "relative_error_constant_vs_exact": beta_const_rel_error,
         "identity_residual_using_exact_beta_and_correlated_coefficients": (
             identity_residual_at_exact_beta
         ),
@@ -1201,66 +1369,109 @@ def run_case(args: argparse.Namespace) -> dict[str, Any]:
         },
     }
 
-    #parameters_path = save_parameters_errors(output_dir, prefix, summary)
-    profile_columns = {
-        "Z": z,
-        "Cm_full": cm_full,
-        "Cm_averaged_correlated": cm_corr,
-        "Cm_averaged_constant": cm_const,
-        "Cm_rescaled_correlated": cm_corr_scaled,
-    }
-    #profiles_path = save_profiles(output_dir, prefix, profile_columns)
-    profiles_txt_path = save_profiles_txt(output_dir, prefix, profile_columns)
-    parameters_txt_path = save_parameters_txt(output_dir, prefix, summary)
+    return CaseResult(
+        args=args,
+        prefix=prefix,
+        nz=nz,
+        corr=corr,
+        exact_mode=exact_mode,
+        beta_exact=beta_exact,
+        beta_corr=beta_corr,
+        beta_const=beta_const,
+        beta_rel_error=beta_rel_error,
+        beta_const_rel_error=beta_const_rel_error,
+        z=z,
+        cm_full=cm_full,
+        cm_corr=cm_corr,
+        cm_corr_scaled=cm_corr_scaled,
+        cm_const=cm_const,
+        gamma_fit=gamma_fit,
+        gamma_mask=gamma_mask,
+        decay_comparison=decay_comparison,
+        summary=summary,
+    )
 
-    plot_path: Path | None = None
+
+def print_case_report(result: CaseResult) -> None:
+    """Print the correlation, decay-rate, and Gamma-fit summary for one case."""
+    args = result.args
+    print("\nUpdated tube/Poiseuille correlation")
+    print(f"  Sh(Pe,Da)                    = {result.corr.sh:.10g}")
+    print(f"  chi(Pe,Da)                   = {result.corr.chi:.10g}")
+    print(f"  Pe_c(Da)                     = {result.corr.pe_c_sh:.10g}")
+    print("\nDominant decay-rate comparison")
+    print(f"  beta_exact                   = {result.beta_exact:.10g}")
+    print(f"  beta_correlated              = {result.beta_corr:.10g}")
+    print(f"  relative difference          = {result.beta_rel_error:.6e}")
+    print(
+        f"  beta fitted from 2D profile  = {result.gamma_fit.beta_full_profile_fit:.10g}"
+    )
+    print(
+        f"  beta_averaged (Sh={args.constant_sh:g}, chi={args.constant_chi:g}) "
+        f"= {result.beta_const:.10g}"
+    )
+    print(f"  relative difference          = {result.beta_const_rel_error:.6e}")
+    print("\nDownstream amplitude fit")
+    print(f"  Gamma                        = {result.gamma_fit.Gamma:.10g}")
+    print(
+        f"  fit window                   = "
+        f"[{result.gamma_fit.z_min:.6g}, {result.gamma_fit.z_max:.6g}]"
+    )
+    print(
+        f"  scaled mean abs rel error    = "
+        f"{result.gamma_fit.mean_abs_rel_error_scaled:.6e}"
+    )
+
+
+def run_case(args: argparse.Namespace) -> dict[str, Any]:
+    """Compute one case, save its outputs, and print its report (CLI path)."""
+    output_dir = Path(args.output_dir).expanduser().resolve()
+    output_dir.mkdir(parents=True, exist_ok=True)
+
+    result = compute_case(args)
+
+    profile_columns = {
+        "Z": result.z,
+        "Cm_full": result.cm_full,
+        "Cm_averaged_correlated": result.cm_corr,
+        "Cm_averaged_constant": result.cm_const,
+        "Cm_rescaled_correlated": result.cm_corr_scaled,
+    }
+    profiles_txt_path = save_profiles_txt(output_dir, result.prefix, profile_columns)
+    parameters_txt_path = save_parameters_txt(output_dir, result.prefix, result.summary)
+
+    png_path: Path | None = None
+    pdf_path: Path | None = None
     if not args.no_plots:
-        plot_path = save_concentration_plot(
+        png_path, pdf_path = save_concentration_plot(
             output_dir=output_dir,
-            prefix=prefix,
-            z=z,
-            cm_full=cm_full,
-            cm_corr=cm_corr,
-            cm_corr_scaled=cm_corr_scaled,
-            cm_const=cm_const,
+            prefix=result.prefix,
+            z=result.z,
+            cm_full=result.cm_full,
+            cm_corr=result.cm_corr,
+            cm_corr_scaled=result.cm_corr_scaled,
+            cm_const=result.cm_const,
             constant_sh=args.constant_sh,
             constant_chi=args.constant_chi,
             y_min=args.plot_ymin,
             y_max=args.plot_ymax,
             dpi=args.plot_dpi,
+            Pe=args.Pe,
+            Da=args.Da,
         )
 
-    print("\nUpdated tube/Poiseuille correlation")
-    print(f"  Sh(Pe,Da)                    = {corr.sh:.10g}")
-    print(f"  chi(Pe,Da)                   = {corr.chi:.10g}")
-    print(f"  Pe_c(Da)                     = {corr.pe_c_sh:.10g}")
-    print("\nDominant decay-rate comparison")
-    print(f"  beta_exact                   = {beta_exact:.10g}")
-    print(f"  beta_correlated              = {beta_corr:.10g}")
-    print(f"  relative difference          = {beta_rel_error:.6e}")
-    print(f"  beta fitted from 2D profile  = {gamma_fit.beta_full_profile_fit:.10g}")
-    print("\nDownstream amplitude fit")
-    print(f"  Gamma                        = {gamma_fit.Gamma:.10g}")
-    print(
-        f"  fit window                   = "
-        f"[{gamma_fit.z_min:.6g}, {gamma_fit.z_max:.6g}]"
-    )
-    print(
-        f"  scaled mean abs rel error    = "
-        f"{gamma_fit.mean_abs_rel_error_scaled:.6e}"
-    )
+    print_case_report(result)
     print("\nSaved files")
-    #print(f"  {profiles_path}")
     print(f"  {profiles_txt_path}")
-    #print(f"  {parameters_path}")
     print(f"  {parameters_txt_path}")
-    if plot_path is not None:
-        print(f"  {plot_path}")
+    if png_path is not None:
+        print(f"  {png_path}")
+        print(f"  {pdf_path}")
 
-    if args.show and plot_path is not None:
+    if args.show and png_path is not None:
         print("\nPlot was saved; open the PNG file to inspect it.")
 
-    return summary
+    return result.summary
 
 
 # =========================================================
@@ -1356,9 +1567,8 @@ def build_parser() -> argparse.ArgumentParser:
     return parser
 
 
-def main() -> None:
-    args = build_parser().parse_args()
-
+def validate_args(args: argparse.Namespace) -> None:
+    """Validate the argument combinations shared by every case runner."""
     if not (0.0 <= args.gamma_zmin_frac < args.gamma_zmax_frac <= 1.0):
         raise ValueError(
             "Require 0 <= gamma-zmin-frac < gamma-zmax-frac <= 1."
@@ -1372,6 +1582,10 @@ def main() -> None:
     if args.plot_dpi <= 0:
         raise ValueError("plot-dpi must be positive.")
 
+
+def main() -> None:
+    args = build_parser().parse_args()
+    validate_args(args)
     run_case(args)
 
 

@@ -42,17 +42,17 @@ _PLUG_SH: dict[str, dict[str, float]] = {
 #   pe_c(Da)   = pec_inf   - (pec_inf - pec0)      / (1 + (Da/da_c_pe)^(2/3))
 _POIS_SH: dict[str, dict[str, float]] = {
     "tube": {
-        "sh00": 6.0,      "sh00_inf": 4.1807, "da_c0":    2.6886,
+        "sh00": 6.0,      "sh00_inf": 4.1807, "da_c0":    2.6889,
         "shinf0": 4.3636, "shinf_inf": 3.6568, "da_c_inf": 1.8848,
-        "pec0": 0.0108,   "pec_inf": 0.9728,   "da_c_pe":  0.5687,
+        "pec0": 0.0108,   "pec_inf": 0.9727,   "da_c_pe":  0.5686,
     },
     "plates": {
-        "sh00": 10.0,     "sh00_inf": 8.1174, "da_c0":    2.3607,
-        "shinf0": 8.2353, "shinf_inf": 7.5410, "da_c_inf": 1.9189,
-        "pec0": 0.0091,   "pec_inf": 0.7853,   "da_c_pe":  0.6338,
+        "sh00": 10.0,     "sh00_inf": 8.1174, "da_c0":    2.3611,
+        "shinf0": 8.2353, "shinf_inf": 7.5407, "da_c_inf": 1.9214,
+        "pec0": 0.0091,   "pec_inf": 0.7856,   "da_c_pe":  0.6345,
     },
     "oneplate": {
-        "sh00": 5.7143,   "sh00_inf": 4.7282, "da_c0":    2.4053,
+        "sh00": 5.7143,   "sh00_inf": 4.7282, "da_c0":    2.4054,
         "shinf0": 5.3846, "shinf_inf": 4.8607, "da_c_inf": 2.4858,
         "pec0": 0.0100,   "pec_inf": 1.0710,   "da_c_pe":  0.8747,
     },
@@ -65,10 +65,10 @@ _POIS_SH: dict[str, dict[str, float]] = {
 #   chi0(Da)    = chi0_inf  + (1 - chi0_inf)  / (1 + Da/da_c_chi0)
 #   chi_inf(Da) = chinf_inf + (1 - chinf_inf) / (1 + Da/da_c_chinf)
 _POIS_CHI: dict[str, dict[str, float]] = {
-    "tube":     {"chi0_inf": 0.7229, "da_c_chi0": 2.8167,
+    "tube":     {"chi0_inf": 0.7229, "da_c_chi0": 2.8168,
                  "chinf_inf": 0.7095, "da_c_chinf": 2.1190, "pec_chi": 0.6874},
-    "plates":   {"chi0_inf": 0.8225, "da_c_chi0": 2.4109,
-                 "chinf_inf": 0.8171, "da_c_chinf": 2.0398, "pec_chi": 0.5367},
+    "plates":   {"chi0_inf": 0.8225, "da_c_chi0": 2.4110,
+                 "chinf_inf": 0.8171, "da_c_chinf": 2.0398, "pec_chi": 0.5366},
     "oneplate": {"chi0_inf": 0.9581, "da_c_chi0": 2.2750,
                  "chinf_inf": 0.9459, "da_c_chinf": 2.3928, "pec_chi": 0.8772},
 }

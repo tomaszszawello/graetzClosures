@@ -43,7 +43,7 @@ from mpl_toolkits.axes_grid1 import make_axes_locatable
 font = {
     "family": "Times New Roman",
     "weight": "normal",
-    "size": 24,
+    "size": 50,
 }
 
 matplotlib.rc("font", **font)
@@ -268,11 +268,11 @@ def plot_map_on_ax(
     cmap="Blues",
     log_color=False,
     symmetric=False,
-    title_fontsize=34,
-    tick_fontsize=24,
-    label_fontsize=28,
-    cbar_ticksize=20,
-    cbar_labelsize=24,
+    title_fontsize=60,
+    tick_fontsize=50,
+    label_fontsize=50,
+    cbar_ticksize=50,
+    cbar_labelsize=50,
     cbar_size="4.5%",
     cbar_pad=0.12,
     show_ylabel=True,
@@ -381,11 +381,11 @@ def plot_full_maps(Pe_tab, Da_tab, Sh_tab, chi_tab, Le_tab, output_base: Path, s
         cbar_label=r"$\mathrm{Sh}$",
         cmap=cmap,
         log_color=False,
-        title_fontsize=38,
-        tick_fontsize=30,
-        label_fontsize=38,
-        cbar_ticksize=30,
-        cbar_labelsize=38,
+        title_fontsize=60,
+        tick_fontsize=50,
+        label_fontsize=60,
+        cbar_ticksize=50,
+        cbar_labelsize=60,
         cbar_size="3.8%",
         cbar_pad=0.14,
         show_ylabel=True,
@@ -438,7 +438,7 @@ def plot_full_maps(Pe_tab, Da_tab, Sh_tab, chi_tab, Le_tab, output_base: Path, s
     png_path = output_base.with_suffix(".png")
     pdf_path = output_base.with_suffix(".pdf")
     fig.savefig(png_path, bbox_inches="tight", dpi=300)
-    fig.savefig(pdf_path, bbox_inches="tight")
+    #fig.savefig(pdf_path, bbox_inches="tight")
     plt.close(fig)
 
     print(f"Saved: {png_path}")

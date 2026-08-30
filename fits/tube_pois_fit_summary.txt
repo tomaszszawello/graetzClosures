@@ -6,8 +6,8 @@ Sh file               = data/Sh_tube_pois.txt
 Pe file               = data/Pe.txt
 Da file               = data/Da.txt
 valid fitted points   = 1000000
-n_top_pe              = 5
-n_low_pe              = 5
+n_top_pe              = 1
+n_low_pe              = 1
 blend residuals       = relative
 
 Fitted structure
@@ -22,17 +22,17 @@ Exact constants and fixed exponents
 SH_0_DA0             = 6
 SH_0_DAINF           = 4.18065498525
 SH_INF_DA0           = 4.36363636364
-SH_INF_DAINF         = 3.65679
+SH_INF_DAINF         = 3.6567934578
 m_pc                 = 0.666666666667
 nP                   = 1.33333333333
 
 Full-precision fitted parameters
 --------------------------------
-Da_c_inf             = 1.88480161391
-Da_c0                = 2.68858591657
-Pc0                  = 0.0108435863245
-Pc_inf               = 0.972759926705
-Da_c_pc              = 0.568678684501
+Da_c_inf             = 1.88477176464
+Da_c0                = 2.68891330118
+Pc0                  = 0.0108435814062
+Pc_inf               = 0.972677814381
+Da_c_pc              = 0.568602600141
 
 Rounded constants and fitted parameters
 ---------------------------------------
@@ -41,10 +41,10 @@ SH_INF_DAINF         = 3.6568
 SH_0_DA0             = 6.0000
 SH_0_DAINF           = 4.1807
 Da_c_inf             = 1.8848
-Da_c0                = 2.6886
+Da_c0                = 2.6889
 Pc0                  = 0.0108
-Pc_inf               = 0.9728
-Da_c_pc              = 0.5687
+Pc_inf               = 0.9727
+Da_c_pc              = 0.5686
 m_pc                 = 2/3
 nP                   = 4/3
 
@@ -57,32 +57,32 @@ Peinf_Dainf          = 3.6568
 
 Fit quality: full-precision formula
 -----------------------------------
-mean_abs_rel         = 0.00285166455775
-median_abs_rel       = 0.00209344324817
-max_abs_rel          = 0.0126719953329
-rms_rel              = 0.00380497575425
+mean_abs_rel         = 0.00285204488173
+median_abs_rel       = 0.0020937530498
+max_abs_rel          = 0.0126722951962
+rms_rel              = 0.00380551358391
 
 Worst point: full-precision formula
 -----------------------------------
 Pe                   = 0.722534949179
 Da                   = 1.32777082936
 Sh_true              = 4.73047755665
-Sh_fit               = 4.67053296713
-rel_err              = -0.0126719953329
-abs_rel_err          = 0.0126719953329
+Sh_fit               = 4.67053154863
+rel_err              = -0.0126722951962
+abs_rel_err          = 0.0126722951962
 
 Fit quality: rounded formula
 ----------------------------
-mean_abs_rel         = 0.00285311282421
-median_abs_rel       = 0.00209436761215
-max_abs_rel          = 0.0126717615231
-rms_rel              = 0.00380596906783
+mean_abs_rel         = 0.00285335144298
+median_abs_rel       = 0.00209479255805
+max_abs_rel          = 0.0126730713122
+rms_rel              = 0.00380641598371
 
 Worst point: rounded formula
 ----------------------------
 Pe                   = 0.722534949179
 Da                   = 1.32777082936
 Sh_true              = 4.73047755665
-Sh_fit               = 4.67053407316
-rel_err              = -0.0126717615231
-abs_rel_err          = 0.0126717615231
+Sh_fit               = 4.67052787723
+rel_err              = -0.0126730713122
+abs_rel_err          = 0.0126730713122

@@ -6,8 +6,8 @@ Sh file               = data/Sh_plates_pois.txt
 Pe file               = data/Pe.txt
 Da file               = data/Da.txt
 valid fitted points   = 1000000
-n_top_pe              = 5
-n_low_pe              = 5
+n_top_pe              = 1
+n_low_pe              = 1
 blend residuals       = relative
 
 Fitted structure
@@ -22,29 +22,29 @@ Exact constants and fixed exponents
 SH_0_DA0             = 10
 SH_0_DAINF           = 8.11742425283
 SH_INF_DA0           = 8.23529411765
-SH_INF_DAINF         = 7.541
+SH_INF_DAINF         = 7.5407008741
 m_pc                 = 0.666666666667
 nP                   = 1.33333333333
 
 Full-precision fitted parameters
 --------------------------------
-Da_c_inf             = 1.91890767528
-Da_c0                = 2.36065099903
-Pc0                  = 0.0091125263297
-Pc_inf               = 0.785301916366
-Da_c_pc              = 0.63383845149
+Da_c_inf             = 1.92142959325
+Da_c0                = 2.36106801822
+Pc0                  = 0.0091193201567
+Pc_inf               = 0.785619849701
+Da_c_pc              = 0.634543271307
 
 Rounded constants and fitted parameters
 ---------------------------------------
 SH_INF_DA0           = 8.2353
-SH_INF_DAINF         = 7.5410
+SH_INF_DAINF         = 7.5407
 SH_0_DA0             = 10.0000
 SH_0_DAINF           = 8.1174
-Da_c_inf             = 1.9189
-Da_c0                = 2.3607
+Da_c_inf             = 1.9214
+Da_c0                = 2.3611
 Pc0                  = 0.0091
-Pc_inf               = 0.7853
-Da_c_pc              = 0.6338
+Pc_inf               = 0.7856
+Da_c_pc              = 0.6345
 m_pc                 = 2/3
 nP                   = 4/3
 
@@ -53,36 +53,36 @@ Corner limits from rounded formula
 Pe0_Da0              = 10
 Pe0_Dainf            = 8.1174
 Peinf_Da0            = 8.2353
-Peinf_Dainf          = 7.541
+Peinf_Dainf          = 7.5407
 
 Fit quality: full-precision formula
 -----------------------------------
-mean_abs_rel         = 0.00143354622504
-median_abs_rel       = 0.00103499137879
-max_abs_rel          = 0.00706365763411
-rms_rel              = 0.00200168189235
+mean_abs_rel         = 0.0014292381898
+median_abs_rel       = 0.00103199331322
+max_abs_rel          = 0.00706847244213
+rms_rel              = 0.00200065110634
 
 Worst point: full-precision formula
 -----------------------------------
 Pe                   = 0.0514886745014
 Da                   = 0.00579112264764
 Sh_true              = 9.05402587975
-Sh_fit               = 8.99007134073
-rel_err              = -0.00706365763411
-abs_rel_err          = 0.00706365763411
+Sh_fit               = 8.99002774733
+rel_err              = -0.00706847244213
+abs_rel_err          = 0.00706847244213
 
 Fit quality: rounded formula
 ----------------------------
-mean_abs_rel         = 0.00143316090301
-median_abs_rel       = 0.00103451503324
-max_abs_rel          = 0.00707982536028
-rms_rel              = 0.00200151862947
+mean_abs_rel         = 0.00142875472842
+median_abs_rel       = 0.00103144141325
+max_abs_rel          = 0.00709550354851
+rms_rel              = 0.00200045707142
 
 Worst point: rounded formula
 ----------------------------
 Pe                   = 0.0514886745014
 Da                   = 0.00579112264764
 Sh_true              = 9.05402587975
-Sh_fit               = 8.98992495772
-rel_err              = -0.00707982536028
-abs_rel_err          = 0.00707982536028
+Sh_fit               = 8.98978300699
+rel_err              = -0.00709550354851
+abs_rel_err          = 0.00709550354851

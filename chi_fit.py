@@ -1,5 +1,6 @@
 import argparse
 import os
+import warnings
 import numpy as np
 from scipy.optimize import least_squares
 
@@ -81,13 +82,13 @@ def parse_args():
     parser.add_argument(
         "--n-top-pe",
         type=int,
-        default=5,
+        default=1,
         help="Number of largest-Pe columns averaged for the high-Pe asymptote.",
     )
     parser.add_argument(
         "--n-low-pe",
         type=int,
-        default=5,
+        default=1,
         help="Number of smallest-Pe columns averaged for the low-Pe asymptote.",
     )
     parser.add_argument(
@@ -146,6 +147,26 @@ def path_in_data_dir(data_dir, filename):
     return os.path.join(data_dir, filename)
 
 
+def _table_orientation_from_header(path):
+    """Read a leading '# ... rows=Da ... cols=Pe ...' comment, if present.
+
+    Sweep scripts (e.g. tube_poiseuille_parallel_fast.py) write this header
+    on their Sh/chi tables. It resolves the otherwise-silent (Pe, Da) vs.
+    (Da, Pe) transpose ambiguity that shape alone cannot: with N_PE == N_DA
+    the two orientations have identical shape, and since both grids are
+    logspace(-3, 3, N), the values do not reveal it either.
+    """
+    with open(path, "r", encoding="utf-8") as f:
+        first_line = f.readline()
+    if not first_line.startswith("#"):
+        return None
+    if "rows=Da" in first_line and "cols=Pe" in first_line:
+        return "da_pe"
+    if "rows=Pe" in first_line and "cols=Da" in first_line:
+        return "pe_da"
+    return None
+
+
 def load_data(config, data_dir="data"):
     chi_path = path_in_data_dir(data_dir, config["chi_file"])
     pe_path = path_in_data_dir(data_dir, config["pe_file"])
@@ -167,10 +188,31 @@ def load_data(config, data_dir="data"):
     if chi_tab.ndim != 2:
         raise ValueError("chi table must be 2D.")
 
-    if chi_tab.shape == (len(Pe_tab), len(Da_tab)) and chi_tab.shape != (len(Da_tab), len(Pe_tab)):
+    orientation = _table_orientation_from_header(chi_path)
+
+    if orientation == "da_pe":
+        pass
+    elif orientation == "pe_da":
+        chi_tab = chi_tab.T
+    elif chi_tab.shape == (len(Pe_tab), len(Da_tab)) and chi_tab.shape != (len(Da_tab), len(Pe_tab)):
         print("Transposing chi_tab to match (len(Da_tab), len(Pe_tab)).")
         chi_tab = chi_tab.T
-    elif chi_tab.shape != (len(Da_tab), len(Pe_tab)):
+    elif chi_tab.shape == (len(Da_tab), len(Pe_tab)):
+        if len(Pe_tab) == len(Da_tab):
+            warnings.warn(
+                f"{chi_path} has no orientation header and len(Pe) == len(Da), "
+                "so the (Pe, Da) vs (Da, Pe) orientation is ambiguous from shape "
+                "alone; assuming (Da, Pe). Regenerate the sweep to add the "
+                "header and remove this ambiguity.",
+                RuntimeWarning,
+            )
+    else:
+        raise ValueError(
+            f"Unexpected chi_tab shape {chi_tab.shape}, "
+            f"expected {(len(Da_tab), len(Pe_tab))}."
+        )
+
+    if chi_tab.shape != (len(Da_tab), len(Pe_tab)):
         raise ValueError(
             f"Unexpected chi_tab shape {chi_tab.shape}, "
             f"expected {(len(Da_tab), len(Pe_tab))}."
@@ -247,7 +289,7 @@ def residuals_chi_inf(params_inf, Da, chi_inf_data):
     return chi_fit - chi_inf_data
 
 
-def fit_chi0(Da_tab, chi_tab, n_low_pe=5):
+def fit_chi0(Da_tab, chi_tab, n_low_pe=1):
     n_low_pe = min(n_low_pe, chi_tab.shape[1])
     chi0_data_all = np.nanmean(chi_tab[:, :n_low_pe], axis=1)
 
@@ -287,7 +329,7 @@ def fit_chi0(Da_tab, chi_tab, n_low_pe=5):
     return best, chi0_data_all
 
 
-def fit_chi_inf(Da_tab, chi_tab, n_top_pe=5):
+def fit_chi_inf(Da_tab, chi_tab, n_top_pe=1):
     n_top_pe = min(n_top_pe, chi_tab.shape[1])
     chi_inf_data_all = np.nanmean(chi_tab[:, -n_top_pe:], axis=1)
 

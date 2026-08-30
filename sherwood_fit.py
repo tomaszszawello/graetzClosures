@@ -1,4 +1,5 @@
 import argparse
+import warnings
 import numpy as np
 from scipy.optimize import least_squares
 
@@ -19,7 +20,14 @@ GEOMETRY_CONFIGS = {
         "output_prefix": "tube_pois",
         # hydraulic-diameter Sherwood, Dh = 2R
         "SH_INF_DA0_EXACT": 48.0 / 11.0,
-        "SH_INF_DAINF_EXACT": 3.65679,
+        # Classical Graetz-Nusselt eigenvalue for the tube (Pe -> inf,
+        # Da -> inf; no closed form, same situation as the plates
+        # SH_INF_DAINF_EXACT above). Value converged to ~1e-12 relative
+        # precision via ODE shooting on the decoupled eigenproblem
+        # phi'' + (1/rho)phi' + lam^2*2*(1-rho^2)*phi = 0, phi(1)=0, regular
+        # at rho=0, giving lam1 = 1.912274420099,
+        # Sh_Dh = 2*(-phi'(1)/Im) = 3.656793457763.
+        "SH_INF_DAINF_EXACT": 3.6567934578,
         "SH_0_DA0_EXACT": 6.0,
         "SH_0_DAINF_EXACT": J01**4 / 8.0,
     },
@@ -32,7 +40,14 @@ GEOMETRY_CONFIGS = {
         "output_prefix": "plates_pois",
         # hydraulic-diameter Sherwood, Dh = 4a
         "SH_INF_DA0_EXACT": 140.0 / 17.0,
-        "SH_INF_DAINF_EXACT": 7.5410,
+        # Classical Graetz-Nusselt eigenvalue for two symmetric isothermal
+        # walls (Pe -> inf, Da -> inf; no closed form, unlike SH_0_DAINF_EXACT
+        # below). Value converged to ~1e-13 relative precision via two
+        # independent methods (ODE shooting and Chebyshev spectral
+        # collocation) on the decoupled eigenproblem phi'' + lam^2 (3/2)(1-rho^2)
+        # phi = 0, phi(1)=0, phi'(0)=0, giving lam1 = 1.373016831112,
+        # Sh_Dh = 4*(-phi'(1)/Im) = 7.540700874069(5).
+        "SH_INF_DAINF_EXACT": 7.5407008741,
         "SH_0_DA0_EXACT": 10.0,
         "SH_0_DAINF_EXACT": np.pi**4 / 12.0,
     },
@@ -82,13 +97,13 @@ def parse_args():
     parser.add_argument(
         "--n-top-pe",
         type=int,
-        default=5,
+        default=1,
         help="Number of largest-Pe columns averaged for the high-Pe asymptote.",
     )
     parser.add_argument(
         "--n-low-pe",
         type=int,
-        default=5,
+        default=1,
         help="Number of smallest-Pe columns averaged for the low-Pe asymptote.",
     )
     parser.add_argument(
@@ -148,8 +163,29 @@ def rounded_constants():
 # =========================================================
 # Data loading
 # =========================================================
+def _table_orientation_from_header(path):
+    """Read a leading '# ... rows=Da ... cols=Pe ...' comment, if present.
+
+    Sweep scripts (e.g. tube_poiseuille_parallel_fast.py) write this header
+    on their Sh/chi tables. It resolves the otherwise-silent (Pe, Da) vs.
+    (Da, Pe) transpose ambiguity that shape alone cannot: with N_PE == N_DA
+    the two orientations have identical shape, and since both grids are
+    logspace(-3, 3, N), the values do not reveal it either.
+    """
+    with open(path, "r", encoding="utf-8") as f:
+        first_line = f.readline()
+    if not first_line.startswith("#"):
+        return None
+    if "rows=Da" in first_line and "cols=Pe" in first_line:
+        return "da_pe"
+    if "rows=Pe" in first_line and "cols=Da" in first_line:
+        return "pe_da"
+    return None
+
+
 def load_data(config, data_dir="data"):
-    Sh_tab = np.loadtxt(f"{data_dir}/{config['sh_file']}")
+    sh_path = f"{data_dir}/{config['sh_file']}"
+    Sh_tab = np.loadtxt(sh_path)
     Pe_tab = np.loadtxt(f"{data_dir}/{config['pe_file']}")
     Da_tab = np.loadtxt(f"{data_dir}/{config['da_file']}")
 
@@ -165,10 +201,31 @@ def load_data(config, data_dir="data"):
     if Sh_tab.ndim != 2:
         raise ValueError("Sh table must be 2D.")
 
-    if Sh_tab.shape == (len(Pe_tab), len(Da_tab)) and Sh_tab.shape != (len(Da_tab), len(Pe_tab)):
+    orientation = _table_orientation_from_header(sh_path)
+
+    if orientation == "da_pe":
+        pass
+    elif orientation == "pe_da":
+        Sh_tab = Sh_tab.T
+    elif Sh_tab.shape == (len(Pe_tab), len(Da_tab)) and Sh_tab.shape != (len(Da_tab), len(Pe_tab)):
         print("Transposing Sh_tab to match (len(Da_tab), len(Pe_tab)).")
         Sh_tab = Sh_tab.T
-    elif Sh_tab.shape != (len(Da_tab), len(Pe_tab)):
+    elif Sh_tab.shape == (len(Da_tab), len(Pe_tab)):
+        if len(Pe_tab) == len(Da_tab):
+            warnings.warn(
+                f"{sh_path} has no orientation header and len(Pe) == len(Da), "
+                "so the (Pe, Da) vs (Da, Pe) orientation is ambiguous from shape "
+                "alone; assuming (Da, Pe). Regenerate the sweep to add the "
+                "header and remove this ambiguity.",
+                RuntimeWarning,
+            )
+    else:
+        raise ValueError(
+            f"Unexpected Sh_tab shape {Sh_tab.shape}, "
+            f"expected {(len(Da_tab), len(Pe_tab))}."
+        )
+
+    if Sh_tab.shape != (len(Da_tab), len(Pe_tab)):
         raise ValueError(
             f"Unexpected Sh_tab shape {Sh_tab.shape}, "
             f"expected {(len(Da_tab), len(Pe_tab))}."
@@ -226,7 +283,7 @@ def residuals_sh_inf(params_inf, Da, Sh_inf_data):
     return (Sh_fit - Sh_inf_data) / Sh_inf_data
 
 
-def fit_sh_inf(Da_tab, Sh_tab, n_top_pe=5):
+def fit_sh_inf(Da_tab, Sh_tab, n_top_pe=1):
     n_top_pe = min(n_top_pe, Sh_tab.shape[1])
     Sh_inf_data_all = np.nanmean(Sh_tab[:, -n_top_pe:], axis=1)
 
@@ -296,7 +353,15 @@ def residuals_sh0(params0, Da, Sh0_data):
     return (Sh_fit - Sh0_data) / Sh0_data
 
 
-def fit_sh0(Da_tab, Sh_tab, n_low_pe=5):
+def fit_sh0(Da_tab, Sh_tab, n_low_pe=1):
+    # The Sh0(Da) "asymptote" is estimated from the smallest-Pe columns of the
+    # grid (Pe >= 1e-3), not from a true Pe -> 0 limit, and is then anchored to
+    # the exact constant SH_0_DA0_EXACT (6.0 for the tube). At the low-Da end
+    # of the grid the two disagree by ~0.8% (e.g. Sh(1e-3, 1e-3) ~= 5.950 vs.
+    # the exact Sh(0, 1e-3) ~= 5.9994), because Sh0(Da) has an O(Da) departure
+    # from its Pe=0 value that a fixed Pe=1e-3 slice does not fully resolve.
+    # This systematically biases the fitted Da_c0 low; it is a known
+    # limitation of the compact correlation near the corner, not a bug.
     n_low_pe = min(n_low_pe, Sh_tab.shape[1])
     Sh0_data_all = np.nanmean(Sh_tab[:, :n_low_pe], axis=1)
 

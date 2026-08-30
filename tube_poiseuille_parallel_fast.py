@@ -18,9 +18,11 @@ Sh_Dh is based on hydraulic diameter Dh = 2R.
 chi = C_a / C_m.
 """
 
+import argparse
 import os
 import time
 from concurrent.futures import ProcessPoolExecutor, as_completed
+from pathlib import Path
 
 import numpy as np
 from scipy.integrate import solve_ivp
@@ -38,11 +40,9 @@ ATOL_RESIDUAL = 1e-11
 RTOL_FINAL = 1e-10
 ATOL_FINAL = 1e-12
 
-# Conservative global bounds for the radius-based Sherwood number and chi.
-# These are only used to choose a safe beta_start decade.
+# Conservative global bound for the radius-based Sherwood number.
+# This is only used to choose a safe beta_start decade.
 SH_R_MIN_BOUND = 1.75   # below tube Dirichlet limit, 3.6568/2 = 1.8284
-SH_R_MAX_BOUND = 3.10   # above tube low-Pe weak-transfer limit, 6/2 = 3
-CHI_MIN_BOUND = 0.69
 CHI_MAX_BOUND = 1.02
 
 
@@ -429,7 +429,15 @@ def find_beta1_beta2(
     verbose=False,
 ):
     """
-    Return beta1 = first physical root and beta2 = next candidate root.
+    Return beta1 = first physical root and beta2 = next physical root after it.
+
+    find_beta1_beta2 only ever needs the first two physical roots, so the
+    scan is capped at max_roots=4 (beta1 plus headroom for at most two
+    spurious roots before the next genuine one) rather than paying for a
+    full climb to beta_max. beta2 is validated with mode_is_physical just
+    like beta1: taking the raw next *candidate* root would let a spurious
+    root between the first two genuine eigenvalues silently corrupt the
+    entrance length Le = 1/(beta2 - beta1).
     """
     roots = scan_candidate_roots(
         Pe=Pe,
@@ -440,7 +448,7 @@ def find_beta1_beta2(
         rho0=rho0,
         rtol_ode=rtol_ode,
         atol_ode=atol_ode,
-        max_roots=8,
+        max_roots=4,
         verbose=verbose,
     )
 
@@ -448,7 +456,7 @@ def find_beta1_beta2(
         raise RuntimeError("No candidate roots found.")
 
     beta1 = None
-    beta2 = np.nan
+    beta1_idx = None
 
     for i, beta in enumerate(roots):
         ok = mode_is_physical(beta, Pe, Da, rho0=rho0)
@@ -458,12 +466,17 @@ def find_beta1_beta2(
 
         if ok:
             beta1 = beta
-            if i + 1 < len(roots):
-                beta2 = roots[i + 1]
+            beta1_idx = i
             break
 
     if beta1 is None:
         raise RuntimeError("No physical beta1 found among candidate roots.")
+
+    beta2 = np.nan
+    for beta in roots[beta1_idx + 1 :]:
+        if mode_is_physical(beta, Pe, Da, rho0=rho0):
+            beta2 = beta
+            break
 
     return beta1, beta2
 
@@ -658,7 +671,7 @@ def plot_map(
     cbar.set_label(cbar_label)
 
     fig.savefig(filename, bbox_inches="tight", dpi=300)
-    plt.show()
+    plt.close(fig)
 
 
 def plot_all_maps(Pe_tab, Da_tab, Sh_tab, chi_tab, Le_tab, prefix="tube_cp_pois_fast"):
@@ -737,7 +750,7 @@ def check_low_pe_behavior():
     plt.grid(True, which="both", alpha=0.25)
     plt.tight_layout()
     plt.savefig("lowPe_Sh_Da_diagnostic_fast.png", dpi=300, bbox_inches="tight")
-    plt.show()
+    plt.close()
 
 
 # =========================================================
@@ -747,6 +760,10 @@ def run_parallel_grid(
     Pe_tab,
     Da_tab,
     prefix="tube_cp_pois_fast",
+    output_dir="data",
+    sh_filename="Sh_tube_pois.txt",
+    chi_filename="chi_tube_pois.txt",
+    le_filename="Le_tube_pois.txt",
     n_workers=None,
     beta_max=10.0,
     growth=1.12,
@@ -754,6 +771,8 @@ def run_parallel_grid(
 ):
     Pe_tab = np.asarray(Pe_tab, dtype=float)
     Da_tab = np.asarray(Da_tab, dtype=float)
+    output_dir = Path(output_dir)
+    output_dir.mkdir(parents=True, exist_ok=True)
 
     n_da = len(Da_tab)
     n_pe = len(Pe_tab)
@@ -829,28 +848,32 @@ def run_parallel_grid(
             )
     rows_out = np.asarray(rows_out)
 
-    np.savetxt(f"Sh_{prefix}.txt", Sh_tab)
-    np.savetxt(f"chi_{prefix}.txt", chi_tab)
-    np.savetxt(f"Le_{prefix}.txt", Le_tab)
-    np.savetxt(f"beta1_{prefix}.txt", beta1_tab)
-    np.savetxt(f"beta2_{prefix}.txt", beta2_tab)
-    np.savetxt(f"fail_{prefix}.txt", fail_tab, fmt="%d")
-    np.savetxt(f"Pe_{prefix}.txt", Pe_tab)
-    np.savetxt(f"Da_{prefix}.txt", Da_tab)
+    # Orientation header consumed by sherwood_fit.py / chi_fit.py's load_data():
+    # with N_PE == N_DA the (Pe, Da) vs (Da, Pe) shape alone is ambiguous.
+    table_header = f"shape=({n_da},{n_pe})  rows=Da (n={n_da})  cols=Pe (n={n_pe})"
+
+    np.savetxt(output_dir / sh_filename, Sh_tab, header=table_header)
+    np.savetxt(output_dir / chi_filename, chi_tab, header=table_header)
+    np.savetxt(output_dir / le_filename, Le_tab, header=table_header)
+    np.savetxt(output_dir / f"beta1_{prefix}.txt", beta1_tab, header=table_header)
+    np.savetxt(output_dir / f"beta2_{prefix}.txt", beta2_tab, header=table_header)
+    np.savetxt(output_dir / f"fail_{prefix}.txt", fail_tab, fmt="%d")
+    np.savetxt(output_dir / "Pe.txt", Pe_tab)
+    np.savetxt(output_dir / "Da.txt", Da_tab)
 
     np.savetxt(
-        f"{prefix}_flat.txt",
+        output_dir / f"{prefix}_flat.txt",
         rows_out,
         header="Pe Da Sh_Dh chi entrance_length beta1 beta2 fail",
     )
 
     print("\nSaved files:")
-    print(f"  Sh_{prefix}.txt")
-    print(f"  chi_{prefix}.txt")
-    print(f"  Le_{prefix}.txt")
-    print(f"  Pe_{prefix}.txt")
-    print(f"  Da_{prefix}.txt")
-    print(f"  {prefix}_flat.txt")
+    print(f"  {output_dir / sh_filename}")
+    print(f"  {output_dir / chi_filename}")
+    print(f"  {output_dir / le_filename}")
+    print(f"  {output_dir / 'Pe.txt'}")
+    print(f"  {output_dir / 'Da.txt'}")
+    print(f"  {output_dir / f'{prefix}_flat.txt'}")
     print(f"Total failures: {np.sum(fail_tab)} / {n_da * n_pe}")
 
     if make_plots:
@@ -859,31 +882,52 @@ def run_parallel_grid(
     return Sh_tab, chi_tab, Le_tab, beta1_tab, beta2_tab, fail_tab
 
 
-if __name__ == "__main__":
-    # -----------------------------------------------------
-    # Choose what to run
-    # -----------------------------------------------------
-    RUN_LOW_PE_DIAGNOSTIC = False
-    RUN_FULL_TABLE = True
+def build_parser():
+    parser = argparse.ArgumentParser(
+        description="Parallel (Pe, Da) eigenvalue sweep for the circular tube."
+    )
+    parser.add_argument(
+        "--workers",
+        type=int,
+        default=None,
+        help="Number of parallel worker processes (default: CPU count - 1).",
+    )
+    parser.add_argument(
+        "--output-dir",
+        default="data",
+        help="Directory for the Sh/chi/Le/Pe/Da output files (default: data).",
+    )
+    parser.add_argument("--n-pe", type=int, default=1000, help="Number of Pe grid points.")
+    parser.add_argument("--n-da", type=int, default=1000, help="Number of Da grid points.")
+    parser.add_argument(
+        "--diagnostics",
+        action="store_true",
+        help="Run the low-Pe spot-check diagnostic before the full sweep.",
+    )
+    parser.add_argument(
+        "--no-plots",
+        action="store_true",
+        help="Skip generating the diagnostic Sh/chi/Le PNG maps.",
+    )
+    return parser
 
-    if RUN_LOW_PE_DIAGNOSTIC:
+
+if __name__ == "__main__":
+    args = build_parser().parse_args()
+
+    if args.diagnostics:
         check_low_pe_behavior()
 
-    if RUN_FULL_TABLE:
-        # Start with a smaller grid to test speed and robustness.
-        # Increase to 1000 only when you are ready for a long production run.
-        N_PE = 1000
-        N_DA = 1000
+    Pe_tab = np.logspace(-3, 3, args.n_pe)
+    Da_tab = np.logspace(-3, 3, args.n_da)
 
-        Pe_tab = np.logspace(-3, 3, N_PE)
-        Da_tab = np.logspace(-3, 3, N_DA)
-
-        run_parallel_grid(
-            Pe_tab=Pe_tab,
-            Da_tab=Da_tab,
-            prefix="tube_cp_pois_fast",
-            n_workers=None,     # None -> use all but one CPU core
-            beta_max=10.0,
-            growth=1.10,
-            make_plots=True,
-        )
+    run_parallel_grid(
+        Pe_tab=Pe_tab,
+        Da_tab=Da_tab,
+        prefix="tube_cp_pois_fast",
+        output_dir=args.output_dir,
+        n_workers=args.workers,   # None -> use all but one CPU core
+        beta_max=10.0,
+        growth=1.10,
+        make_plots=not args.no_plots,
+    )

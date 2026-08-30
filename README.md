@@ -198,9 +198,17 @@ python plates_onewall_poiseuille_parallel_fast.py
 ```
 
 Each script sweeps the full (Pe, Da) grid and writes the corresponding
-`Sh_*_pois.txt`, `chi_*_pois.txt`, and `Le_*_pois.txt` files into `data/`.
-The number of parallel workers is controlled by the `--workers` flag (defaults
-to the number of CPU cores).
+`Sh_*_pois.txt`, `chi_*_pois.txt`, and `Le_*_pois.txt` files, plus the shared
+`Pe.txt` and `Da.txt` grids, into `data/` — the exact files and location
+`sherwood_fit.py` and `chi_fit.py` (step 3) read from, so the three commands
+above can be run directly before them on a fresh clone. Per-run diagnostics
+(`beta1_*`, `beta2_*`, `fail_*`, `*_flat.txt`) are written alongside them.
+
+The number of parallel workers is controlled by the `--workers` flag
+(default: CPU count minus one). Other flags: `--output-dir` (default `data`),
+`--n-pe`/`--n-da` (grid size, default 1000 each), `--diagnostics` (run a
+quick spot-check before the full sweep), and `--no-plots` (skip the
+diagnostic Sh/chi/Le PNG maps).
 
 ### 3 — Fit the Sh and χ correlations
 
@@ -257,12 +265,10 @@ Key options:
 | `--output-dir` | `tube_solver_output` | Output directory |
 | `--no-plots` | — | Skip the PNG figure |
 
-Each run writes four data files plus an optional plot:
-- `{prefix}_profiles.csv` — axial concentration profiles (CSV)
-- `{prefix}_profiles.txt` — same, space-delimited (numpy format)
-- `{prefix}_parameters_errors.json` — all scalar diagnostics (JSON)
-- `{prefix}_parameters.txt` — same, key = value text format
-- `{prefix}.png` — concentration comparison plot (skipped with `--no-plots`)
+Each run writes two data files plus an optional plot:
+- `{prefix}_profiles.txt` — axial concentration profiles, space-delimited (numpy format)
+- `{prefix}_parameters.txt` — all scalar diagnostics, key = value text format
+- `{prefix}.png` and `{prefix}.pdf` — concentration comparison plot (skipped with `--no-plots`)
 
 ---
 
@@ -300,7 +306,13 @@ The full numerical dataset is archived on Zenodo:
 T. Szawełło and P. Szymczak, dataset for
 “Extended Graetz problem in laminar duct flows with Robin boundary conditions:
 Sherwood/Nusselt correlations and averaged transport closures”,
-Zenodo, https://doi.org/10.5281/zenodo.20937456
+Zenodo, https://doi.org/10.5281/zenodo.22144534
+
+---
+
+## Funding
+
+This research is funded by the National Science Centre, Poland, under grant 2022/47/B/ST3/03395.
 
 ---
 

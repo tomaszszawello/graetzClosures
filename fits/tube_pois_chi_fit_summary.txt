@@ -6,8 +6,8 @@ chi file                = data/chi_tube_pois.txt
 Pe file                 = data/Pe.txt
 Da file                 = data/Da.txt
 valid fitted points     = 1000000
-n_top_pe                = 5
-n_low_pe                = 5
+n_top_pe                = 1
+n_low_pe                = 1
 blend residuals         = absolute
 
 Fitted structure
@@ -25,9 +25,9 @@ CHI_INF_DAINF            = 0.709505604759
 
 Full-precision fitted parameters
 --------------------------------
-Da_c0                    = 2.81672782854
-Da_c_inf                 = 2.11901211104
-Pchi                     = 0.687400728976
+Da_c0                    = 2.81675542193
+Da_c_inf                 = 2.11901203404
+Pchi                     = 0.687377789619
 
 Rounded constants and fitted parameters
 ---------------------------------------
@@ -35,7 +35,7 @@ CHI_0_DA0                = 1.0000
 CHI_0_DAINF              = 0.7229
 CHI_INF_DA0              = 1.0000
 CHI_INF_DAINF            = 0.7095
-Da_c0                    = 2.8167
+Da_c0                    = 2.8168
 Da_c_inf                 = 2.1190
 Pchi                     = 0.6874
 
@@ -48,44 +48,44 @@ Peinf_Dainf              = 0.7095
 
 Fit quality: full-precision formula
 -----------------------------------
-mean_abs_error           = 0.00126408159432
-median_abs_error         = 0.000764607351104
-max_abs_error            = 0.00527134381779
-rms_error                = 0.00184829009359
-mean_abs_rel_error       = 0.00150833399364
-median_abs_rel_error     = 0.000934558581466
-max_abs_rel_error        = 0.00649451743365
-rms_rel_error            = 0.00220141549927
+mean_abs_error           = 0.0012640750848
+median_abs_error         = 0.000764634054373
+max_abs_error            = 0.00527105464519
+rms_error                = 0.00184827505957
+mean_abs_rel_error       = 0.00150833317785
+median_abs_rel_error     = 0.000934550629366
+max_abs_rel_error        = 0.0064950920794
+rms_rel_error            = 0.00220142149245
 
 Worst point: full-precision formula
 -----------------------------------
 Pe                       = 0.202444650998
 Da                       = 1.03517795563
 chi_true                 = 0.926054176923
-chi_fit                  = 0.920782833106
-error                    = -0.00527134381779
-abs_error                = 0.00527134381779
-rel_error                = -0.00569226288175
-abs_rel_error            = 0.00569226288175
+chi_fit                  = 0.920783122278
+error                    = -0.00527105464519
+abs_error                = 0.00527105464519
+rel_error                = -0.00569195061859
+abs_rel_error            = 0.00569195061859
 
 Fit quality: rounded formula
 ----------------------------
-mean_abs_error           = 0.00126341609642
-median_abs_error         = 0.000763398426654
-max_abs_error            = 0.00527190555194
-rms_error                = 0.00184786459002
-mean_abs_rel_error       = 0.00150738576517
-median_abs_rel_error     = 0.000932998639499
-max_abs_rel_error        = 0.00649571622156
-rms_rel_error            = 0.00220070183961
+mean_abs_error           = 0.00126339179402
+median_abs_error         = 0.000763417300162
+max_abs_error            = 0.0052704073681
+rms_error                = 0.00184780510777
+mean_abs_rel_error       = 0.00150738794961
+median_abs_rel_error     = 0.00093298934663
+max_abs_rel_error        = 0.0064978039922
+rms_rel_error            = 0.00220073364201
 
 Worst point: rounded formula
 ----------------------------
-Pe                       = 0.205263775271
-Da                       = 1.04959323056
-chi_true                 = 0.9252173314
-chi_fit                  = 0.919945425848
-error                    = -0.00527190555194
-abs_error                = 0.00527190555194
-rel_error                = -0.00569801858766
-abs_rel_error            = 0.00569801858766
+Pe                       = 0.202444650998
+Da                       = 1.03517795563
+chi_true                 = 0.926054176923
+chi_fit                  = 0.920783769555
+error                    = -0.0052704073681
+abs_error                = 0.0052704073681
+rel_error                = -0.00569125165615
+abs_rel_error            = 0.00569125165615
