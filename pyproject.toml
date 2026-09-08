@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "graetz-closures"
-version = "0.1.0"
+version = "0.1.2"
 description = "Compact Sh/Nu and chi correlations for the extended Graetz problem in laminar duct flows"
 readme = "README.md"
 license = { file = "LICENSE" }

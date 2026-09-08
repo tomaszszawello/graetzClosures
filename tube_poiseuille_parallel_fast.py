@@ -909,6 +909,16 @@ def build_parser():
         action="store_true",
         help="Skip generating the diagnostic Sh/chi/Le PNG maps.",
     )
+    parser.add_argument(
+        "--corner",
+        action="store_true",
+        help=(
+            "Run the small-Da weak-exchange corner diagnostic sweep instead "
+            "of the full production grid: Da in [1e-8, 1] (100 pts) at "
+            "Pe in {1e-3, 1e-2, 1e-1}, saved with prefix 'tube_corner'. "
+            "--n-pe/--n-da are ignored in this mode. See plot_corner.py."
+        ),
+    )
     return parser
 
 
@@ -918,13 +928,19 @@ if __name__ == "__main__":
     if args.diagnostics:
         check_low_pe_behavior()
 
-    Pe_tab = np.logspace(-3, 3, args.n_pe)
-    Da_tab = np.logspace(-3, 3, args.n_da)
+    if args.corner:
+        Pe_tab = np.logspace(-3, -1, 3)
+        Da_tab = np.logspace(-8, 0, 100)
+        prefix = "tube_corner"
+    else:
+        Pe_tab = np.logspace(-3, 3, args.n_pe)
+        Da_tab = np.logspace(-3, 3, args.n_da)
+        prefix = "tube_cp_pois_fast"
 
     run_parallel_grid(
         Pe_tab=Pe_tab,
         Da_tab=Da_tab,
-        prefix="tube_cp_pois_fast",
+        prefix=prefix,
         output_dir=args.output_dir,
         n_workers=args.workers,   # None -> use all but one CPU core
         beta_max=10.0,

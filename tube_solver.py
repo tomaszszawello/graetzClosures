@@ -61,7 +61,7 @@ def configure_plot_style() -> None:
             "axes.titlesize": 36,
             "xtick.labelsize": 27,
             "ytick.labelsize": 27,
-            "legend.fontsize": 18,
+            "legend.fontsize": 11,
             "axes.linewidth": 2.0,
             "xtick.direction": "out",
             "ytick.direction": "out",
@@ -240,6 +240,7 @@ def solve_axisym_ADR_steady(
     advection_scheme: str = "upwind2",
     outlet_bc: str = "mode",
     outlet_lambda: float | None = None,
+    velocity_profile: str = "poiseuille",
 ) -> tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
     """Solve the steady axisymmetric advection-diffusion problem.
 
@@ -248,6 +249,10 @@ def solve_axisym_ADR_steady(
 
     The Robin wall condition is -C_rho(1,Z)=Da C(1,Z).  The default outlet
     condition imposes the exact dominant modal slope, C_Z=lambda_minus C.
+
+    velocity_profile selects the mean-normalized axial velocity u_hat(rho):
+    "poiseuille" (default) for 2(1-rho^2), or "plug" for the uniform profile
+    used by tube_solver_plug.py.
     """
     _positive_inputs(Pe, Da)
     if Pe <= 0.0:
@@ -272,7 +277,13 @@ def solve_axisym_ADR_steady(
     dr = rf[1] - rf[0]
     r = 0.5 * (rf[:-1] + rf[1:])
 
-    u = 2.0 * (1.0 - r**2)  # mean-normalized Poiseuille profile
+    velocity_profile_lc = velocity_profile.lower()
+    if velocity_profile_lc == "poiseuille":
+        u = 2.0 * (1.0 - r**2)  # mean-normalized Poiseuille profile
+    elif velocity_profile_lc == "plug":
+        u = np.ones_like(r)  # mean-normalized plug (uniform) profile
+    else:
+        raise ValueError("velocity_profile must be 'poiseuille' or 'plug'.")
 
     inlet_velocity_lc = inlet_velocity.lower()
     if inlet_velocity_lc == "local":
@@ -1069,11 +1080,12 @@ def plot_concentration_on_ax(
     if show_legend:
         ax.legend(
             loc="upper right",
-            frameon=False,
+            frameon=True,
             handlelength=2.2,
             handletextpad=0.75,
             borderaxespad=0.55,
             labelspacing=0.55,
+            fontsize = 15
         )
     if panel_label:
         ax.text(
@@ -1123,8 +1135,7 @@ def save_concentration_plot(
         y_min=y_min,
         y_max=y_max,
         title=(
-            f"Concentration for Pe={_format_num_for_title(Pe)}, "
-            f"Da={_format_num_for_title(Da)}"
+            r"Concentration $C_\mathrm{m}$"
         ),
     )
 
@@ -1162,6 +1173,13 @@ class CaseResult:
     gamma_mask: np.ndarray
     decay_comparison: dict[str, float]
     summary: dict[str, Any]
+    # Closed-form leading-eigenmode Gamma (exact at every Pe for plug flow --
+    # see tube_solver_plug.py's analytic_gamma_leading_mode); NaN here since
+    # only tube_solver_plug.py populates it.
+    gamma_analytic: float = float("nan")
+    # Two-mesh Richardson extrapolation of the fitted Gamma (only populated
+    # when tube_solver_plug.py's --gamma-high-accuracy is used); NaN here.
+    gamma_richardson: float = float("nan")
 
 
 def compute_case(args: argparse.Namespace) -> CaseResult:

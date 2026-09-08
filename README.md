@@ -137,7 +137,10 @@ model, producing concentration profiles and decay-rate diagnostics.
 ├── chi_fit.py                         # Fit χ(Pe, Da) correlation
 ├── plot_full_diagrams.py              # Full (Pe, Da) maps of Sh, χ, Le
 ├── plot_sh_vs_da.py                   # Sh(Da) curves for tube and plates
-├── tube_solver.py                     # 2D tube solver + closure comparison
+├── plot_corner.py                     # Weak-exchange corner (small-Da) diagnostics, tube
+├── tube_solver.py                     # 2D tube solver + closure comparison, Poiseuille flow
+├── tube_solver_plug.py                # 2D tube solver + closure comparison, plug flow
+├── plot_tube_two_panel.py             # Two-panel concentration figure from tube_solver.py cases
 ├── requirements.txt
 └── README.md
 ```
@@ -210,6 +213,21 @@ The number of parallel workers is controlled by the `--workers` flag
 quick spot-check before the full sweep), and `--no-plots` (skip the
 diagnostic Sh/chi/Le PNG maps).
 
+### 2b — Weak-exchange corner diagnostics (tube)
+
+```bash
+python tube_poiseuille_parallel_fast.py --corner --output-dir data
+```
+
+`--corner` switches the same sweep to a small-Da "weak-exchange corner"
+diagnostic grid — Da ∈ [1e-8, 1] (100 points) at three small Pe
+(1e-3, 1e-2, 1e-1) — and writes
+`data/{Sh,Da,Pe,beta1,beta2,fail}_tube_corner.txt` and `tube_corner_flat.txt`
+(prefix `tube_corner`) instead of the full grid's `tube_cp_pois_fast` files.
+This resolves the non-commuting Pe → 0 / Da → 0 corner (Sh → 6 vs. Sh → 48/11)
+that the full grid's log-spaced Da down to 1e-3 does not reach finely enough.
+`--n-pe`/`--n-da` are ignored in this mode. See `plot_corner.py` below.
+
 ### 3 — Fit the Sh and χ correlations
 
 ```bash
@@ -242,6 +260,22 @@ Sh(Da) comparison (tube and plates, plug vs. Poiseuille):
 python plot_sh_vs_da.py
 ```
 
+Weak-exchange corner diagnostics for the tube (requires the `tube_corner`
+data from step 2b above):
+
+```bash
+python plot_corner.py --data-dir data --output-dir figures
+```
+
+Saves four figures to `figures/`: `tube_corner_asymptotics.png` (Sh_Dh(Da)
+per Pe with the composite asymptotic formula and predicted local maxima
+overlaid), `..._transition.png` and `..._maximum.png` (two collapse
+diagnostics that isolate, respectively, the 48/11 → 6 transition and the
+location/height of the Sh maximum onto a single curve in Pe-rescaled
+variables), and `..._composite.png` (all three combined in one figure).
+Pass `--skip-profile`/`--skip-transition`/`--skip-maximum`/`--skip-composite`
+to omit any of them.
+
 Figures are saved to `figures/`.
 
 ### 5 — Standalone tube solver
@@ -269,6 +303,54 @@ Each run writes two data files plus an optional plot:
 - `{prefix}_profiles.txt` — axial concentration profiles, space-delimited (numpy format)
 - `{prefix}_parameters.txt` — all scalar diagnostics, key = value text format
 - `{prefix}.png` and `{prefix}.pdf` — concentration comparison plot (skipped with `--no-plots`)
+
+`plot_tube_two_panel.py` runs `tube_solver.py` for two (Pe, Da) cases (edit
+the `CASES` list at the top of the file) and saves one stacked two-panel
+version of the concentration figure — used for the manuscript's side-by-side
+comparison figure:
+
+```bash
+python plot_tube_two_panel.py --output-dir figures --prefix tube_two_panel
+```
+
+### 6 — Standalone tube solver, plug flow
+
+`tube_solver_plug.py` is the plug-flow counterpart of `tube_solver.py`: same
+2D axisymmetric solver, same output files and CLI shape, but for a uniform
+(plug) velocity profile. Because the plug-flow transverse eigenvalue problem
+is Pe-independent, β₁ is available in closed form (root of
+κJ₁(κ) = Da·J₀(κ), see `sherwood_plug.py`) rather than by ODE shooting, and
+Sh(Da) uses the fitted correlation in `fits/tube_plug_fit_summary.txt` with
+χ = 1 exactly (no Pe crossover to fit).
+
+```bash
+python tube_solver_plug.py --Pe 10 --Da 100 --Lambda 5 --output-dir data
+```
+
+It additionally reports the closed-form leading-eigenmode amplitude
+
+$$\Gamma_{\text{analytic}} = \dfrac{4 J_1^2(\lambda_1)}{\lambda_1^2\left[J_0^2(\lambda_1) + J_1^2(\lambda_1)\right]}$$
+
+alongside the amplitude Γ fitted from the 2D solution. For the semi-infinite
+plug-flow problem Γ = Γ_analytic identically (the inlet-amplitude prefactor
+common to both the exact mode and the reduced 1D model cancels out of their
+ratio), so this is a built-in accuracy check rather than a separate physical
+quantity. A plain fit can still disagree with Γ_analytic by 1–3% from two
+resolvable numerical effects — axial truncation error for fast-decaying
+cases, and second-eigenmode contamination when the fit window isn't several
+local spectral-gap lengths Le = 1/(β₂−β₁) downstream. Pass
+`--gamma-high-accuracy` to fix both automatically (Le-scaled fit window,
+two-mesh Richardson extrapolation in dz): this drove the disagreement to
+≤0.03% across Pe ∈ [0.1, 10], Da ∈ [0.1, 100] in testing, at the cost of two
+2D solves on grids roughly 10x finer than the defaults.
+
+Key options (in addition to the `tube_solver.py` flags above):
+
+| Flag | Default | Description |
+|---|---|---|
+| `--constant-sh` | 4.0 | Sh in the baseline constant closure (compared against the fitted one) |
+| `--constant-chi` | 1.0 | χ in the baseline constant closure |
+| `--gamma-high-accuracy` | off | Verify Γ = Γ_analytic to ≤0.03% (see above); overrides `--Lambda`/`--dz`/`--gamma-zmin-frac`/`--gamma-zmax-frac` |
 
 ---
 
@@ -306,7 +388,7 @@ The full numerical dataset is archived on Zenodo:
 T. Szawełło and P. Szymczak, dataset for
 “Extended Graetz problem in laminar duct flows with Robin boundary conditions:
 Sherwood/Nusselt correlations and averaged transport closures”,
-Zenodo, https://doi.org/10.5281/zenodo.22144534
+Zenodo, https://doi.org/10.5281/zenodo.22657853
 
 ---
 

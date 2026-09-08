@@ -54,12 +54,12 @@ matplotlib.rcParams["mathtext.fontset"] = "stix"
 # =========================================================
 GEOMETRIES = {
     "plates": {
-        "label": "Parallel plates",
+        "label": "parallel plates",
         "color": "tab:blue",
         "marker": None,
     },
     "tube": {
-        "label": "Circular tube",
+        "label": "circular tube",
         "color": "tab:red",
         "marker": "o",
     },
@@ -276,7 +276,7 @@ def plot_sh_vs_da(data_dir: Path, output_base: Path, geometries: list[str]):
     ax.set_title(r"Sherwood number $\mathrm{Sh}$")
     ax.grid(True, which="major", alpha=0.25)
     ax.grid(True, which="minor", alpha=0.10)
-    ax.legend(frameon=True, fontsize=10, ncol=1)
+    ax.legend(frameon=True, fontsize=11, ncol=1)
 
     png_path = output_base.with_suffix(".png")
     pdf_path = output_base.with_suffix(".pdf")
